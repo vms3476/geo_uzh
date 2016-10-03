@@ -1,18 +1,19 @@
 
 % specify main path to data
-root = '/media/Data/victoria/geo_uzh/';
+%base = '/media/Data/victoria/geo_uzh/';
+base = '/Users/scholl/geo_uzh/';
 
 % plot parameters
 cmap = parula;% plot parameters
 
 %% reading files 
 
-path_data = 'data/KantonAargau/LeafOff';
+path_data = 'data/KantonAargau/LeafOff/';
 file = '624000_264000';
 
-fname_las = [root path_data file '.laz'];
-fname_mat = [root path_data file '_leaf_off.mat'];
-fname_dtm = [root path_data 'DTM_' file '.tif']; 
+fname_las = [base path_data file '.laz'];
+fname_mat = [base path_data file '_leaf_off.mat'];
+fname_dtm = [base path_data 'DTM_' file '.tif']; 
 
 % read mat file 
 mat = load(fname_mat);
@@ -178,8 +179,8 @@ title('raster res: 2.0');
 %% MATLAB coordinate test
 
 file = '658000_245000';
-leafoff = load([root 'data/KantonAargau/LeafOff/658000_245000_leaf_off.mat']);
-leafon = load([root 'data/KantonAargau/LeafOn/658000_245000_leaf_on.mat']);
+leafoff = load([base 'data/KantonAargau/LeafOff/658000_245000_leaf_off.mat']);
+leafon = load([base 'data/KantonAargau/LeafOn/658000_245000_leaf_on.mat']);
 
 % find boundaries
 x_min = min(leafoff.data.x);
