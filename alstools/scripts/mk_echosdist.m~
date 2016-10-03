@@ -1,0 +1,3 @@
+% script to compute distances between echo types for Laegeren
+
+raw = readlas('/Users/morsdorf/data/Laegeren/2010/RAW_SUMMER/data.las');

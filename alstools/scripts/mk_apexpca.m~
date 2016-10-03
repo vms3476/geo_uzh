@@ -1,0 +1,3 @@
+cd /Users/morsdorf/Desktop/APEX_PCA
+img = enviread('pcaOut7b_20140718_geo');
+myimage(img.x,img.y,squeeze(img.z(:,:,[1,3,4])));
