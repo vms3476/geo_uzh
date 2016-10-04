@@ -1,27 +1,27 @@
 %% MATLAB coordinate test
 
 % specify main path to data
-root = '/media/Data/victoria/geo_uzh/';
+base = '/Users/scholl/geo_uzh/';
 
 % plot parameters
 cmap = parula;% plot parameters
 
-% input mat filename
+% raster resolution
+% res = 0.5;
+res = 1.0; 
+
+
+% read data
 
 % leaf off
-filename = [root 'data/KantonAargau/LeafOff/631000_264000_leaf_off.mat'];
+filename = [base 'data/KantonAargau/LeafOff/631000_264000_leaf_off.mat'];
 out = filename(end-25:end-4);
 tile = filename(end-25:end-13);
+mat_leafoff = load(filename);
+data_leafoff = mat_leafoff.data;
+pc_leafoff = readlas([base 'data/KantonAargau/LeafOff/631000_264000.laz']);
 
-% leaf on
-filename = [root 'data/KantonAargau/LeafOn/631000_264000_leaf_on.mat'];
-out = filename(end-24:end-4);
-tile = filename(end-24:end-13);
-
-mat = load(filename);
-data = mat.data;
-
-%% define subset boundaries
+% define subset boundaries for deciduous and coniferous
 
 % % default: minimum x,y coordinates (lower left corner)
 % x_min = min(data.x);
@@ -36,37 +36,21 @@ x_max = 631860;
 y_min = 264610;
 y_max = 264710;
 
-% coniferous 
-tree_type = 'coniferous';
-x_min = 631840;
-x_max = 631940;
-y_min = 264300;
-y_max = 264400;
 
-% raster resolution
-% res = 0.5;
-res = 1.0; 
-
-%% create and save mat file of dsm-dtm 
-
-% find indices based on specified boundaries
-
-% % define subset by number of pixels here
-%i = data.x > (x_min + 200) & data.x < (x_min + 400) & data.y > (y_min + 200) & data.y < (y_min + 400);
+% create and save mat file of dsm-dtm 
 
 % define subset by x,y min,max from previous section
-i = data.x > (x_min) & data.x < (x_max) & data.y > (y_min) & data.y < (y_max);
+i = data_leafoff.x > (x_min) & data_leafoff.x < (x_max) & data_leafoff.y > (y_min) & data_leafoff.y < (y_max);
 
-subset.x = data.x(i);
-subset.y = data.y(i);
-subset.z = data.z(i);
-subset.z_AG = data.z_AG(i);
-subset.rnnr = data.rnnr(i);
-subset.z_DTM = data.z_DTM(i); 
+subset.x = data_leafoff.x(i);
+subset.y = data_leafoff.y(i);
+subset.z = data_leafoff.z(i);
+subset.z_AG = data_leafoff.z_AG(i);
+subset.rnnr = data_leafoff.rnnr(i);
+subset.z_DTM = data_leafoff.z_DTM(i); 
 
 % first return indices
-r = subset.rnnr;
-ii = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
+r = subset.rnnr; ii = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
 
 % DSM using only first returns
 subset.x_r1 = subset.x(ii);
@@ -79,28 +63,128 @@ subset_r1_ras = raw2ras([subset.x_r1,subset.y_r1,subset.z_r1],res,res,'dsm');
 dtm = raw2ras([subset.x,subset.y,subset.z_DTM],res,res,'dsm');
 subset_r1_ras.dif = subset_r1_ras.z - dtm.z;
 
-save([root 'output/' out '_' tree_type '_subset_res_' ],'subset_r1_ras')
+save([base 'output/' out '_' tree_type '_subset_res_' ],'subset_r1_ras')
+
+
+% coniferous 
+tree_type = 'coniferous';
+x_min = 631840;
+x_max = 631940;
+y_min = 264300;
+y_max = 264400;
+
+% create and save mat file of dsm-dtm 
+
+% define subset by x,y min,max from previous section
+i = data_leafoff.x > (x_min) & data_leafoff.x < (x_max) & data_leafoff.y > (y_min) & data_leafoff.y < (y_max);
+
+subset.x = data_leafoff.x(i);
+subset.y = data_leafoff.y(i);
+subset.z = data_leafoff.z(i);
+subset.z_AG = data_leafoff.z_AG(i);
+subset.rnnr = data_leafoff.rnnr(i);
+subset.z_DTM = data_leafoff.z_DTM(i); 
+
+% first return indices
+r = subset.rnnr; ii = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
+
+% DSM using only first returns
+subset.x_r1 = subset.x(ii);
+subset.y_r1 = subset.y(ii);
+subset.z_r1 = subset.z(ii);
+subset_r1_ras = raw2ras([subset.x_r1,subset.y_r1,subset.z_r1],res,res,'dsm');
+[subset_r1_ras.X, subset_r1_ras.Y] = meshgrid(subset_r1_ras.x,subset_r1_ras.y);
+
+% subtract DTM from DSM of first returns 
+dtm = raw2ras([subset.x,subset.y,subset.z_DTM],res,res,'dsm');
+subset_r1_ras.dif = subset_r1_ras.z - dtm.z;
+
+save([base 'output/' out '_' tree_type '_subset_res_' ],'subset_r1_ras')
+
+
+%% leaf on 
+filename = [base 'data/KantonAargau/LeafOn/631000_264000_leaf_on.mat'];
+out = filename(end-24:end-4);
+tile = filename(end-24:end-12);
+mat_leafon = load(filename);
+data_leafon = mat_leafon.data;
+pc_leafon = readlas([base 'data/KantonAargau/LeafOn/631000_264000.laz']);
+
+% create and save mat file of dsm-dtm 
+
+% define subset by x,y min,max from previous section
+i = data_leafon.x > (x_min) & data_leafon.x < (x_max) & data_leafon.y > (y_min) & data_leafon.y < (y_max);
+
+subset.x = data_leafon.x(i);
+subset.y = data_leafon.y(i);
+subset.z = data_leafon.z(i);
+subset.z_AG = data_leafon.z_AG(i);
+subset.rnnr = data_leafon.rnnr(i);
+subset.z_DTM = data_leafon.z_DTM(i); 
+
+% first return indices
+r = subset.rnnr; ii = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
+
+% DSM using only first returns
+subset.x_r1 = subset.x(ii);
+subset.y_r1 = subset.y(ii);
+subset.z_r1 = subset.z(ii);
+subset_r1_ras = raw2ras([subset.x_r1,subset.y_r1,subset.z_r1],res,res,'dsm');
+[subset_r1_ras.X, subset_r1_ras.Y] = meshgrid(subset_r1_ras.x,subset_r1_ras.y);
+
+% subtract DTM from DSM of first returns 
+dtm = raw2ras([subset.x,subset.y,subset.z_DTM],res,res,'dsm');
+subset_r1_ras.dif = subset_r1_ras.z - dtm.z;
+
+save([base 'output/' out '_' tree_type '_subset_res_' ],'subset_r1_ras')
+
+
+% coniferous 
+tree_type = 'coniferous';
+x_min = 631840;
+x_max = 631940;
+y_min = 264300;
+y_max = 264400;
+
+% create and save mat file of dsm-dtm 
+
+% define subset by x,y min,max from previous section
+i = data_leafon.x > (x_min) & data_leafon.x < (x_max) & data_leafon.y > (y_min) & data_leafon.y < (y_max);
+
+subset.x = data_leafon.x(i);
+subset.y = data_leafon.y(i);
+subset.z = data_leafon.z(i);
+subset.z_AG = data_leafon.z_AG(i);
+subset.rnnr = data_leafon.rnnr(i);
+subset.z_DTM = data_leafon.z_DTM(i); 
+
+% first return indices
+r = subset.rnnr; ii = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
+
+% DSM using only first returns
+subset.x_r1 = subset.x(ii);
+subset.y_r1 = subset.y(ii);
+subset.z_r1 = subset.z(ii);
+subset_r1_ras = raw2ras([subset.x_r1,subset.y_r1,subset.z_r1],res,res,'dsm');
+[subset_r1_ras.X, subset_r1_ras.Y] = meshgrid(subset_r1_ras.x,subset_r1_ras.y);
+
+% subtract DTM from DSM of first returns 
+dtm = raw2ras([subset.x,subset.y,subset.z_DTM],res,res,'dsm');
+subset_r1_ras.dif = subset_r1_ras.z - dtm.z;
+
+save([base 'output/' out '_' tree_type '_subset_res_' ],'subset_r1_ras')
+
+
+
 
 %% plot both leaf off / on 
 
 % load leaf on / off, deciduous / coniferous for the current tile
-if findstr(out, 'on')
-    tree_type = 'deciduous';
-    load([root 'output/' out '_' tree_type '_subset']); leafon_deciduous = subset_r1_ras;
-    load([root 'output/' out(1:end-1) 'ff' '_' tree_type '_subset']); leafoff_deciduous = subset_r1_ras;
-    
-    tree_type = 'coniferous';
-    load([root 'output/' out '_' tree_type '_subset']); leafon_coniferous = subset_r1_ras;
-    load([root 'output/' out(1:end-1) 'ff' '_' tree_type '_subset']); leafoff_coniferous = subset_r1_ras;
-else
-    tree_type = 'deciduous';
-    load([root 'output/' out '_' tree_type '_subset']); leafoff_deciduous = subset_r1_ras;
-    load([root 'output/' out(1:end-2) 'n' '_' tree_type '_subset']); leafon_deciduous = subset_r1_ras;
-    
-    tree_type = 'coniferous';
-    load([root 'output/' out '_' tree_type '_subset']); leafoff_coniferous = subset_r1_ras;
-    load([root 'output/' out(1:end-2) 'n' '_' tree_type '_subset']); leafon_coniferous = subset_r1_ras;
-end
+
+load([base 'output/' tile '_leaf_on_deciduous_subset']); leafon_deciduous = subset_r1_ras;
+load([base 'output/' tile '_leaf_on_coniferous_subset']); leafon_coniferous = subset_r1_ras;
+load([base 'output/' tile '_leaf_off_deciduous_subset']); leafoff_deciduous = subset_r1_ras;
+load([base 'output/' tile '_leaf_off_coniferous_subset']); leafoff_coniferous = subset_r1_ras;
 
 
 %z_max = round(max(max(max(leafoff.dif)),max(max(leafon.dif))));
