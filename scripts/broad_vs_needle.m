@@ -1,4 +1,5 @@
-% create raster using leaf-off first returns for broad vs. needle leaf 
+% create raster using leaf-off first returns for broad vs. needle leaf
+% for tile subsets within Kanton Aargau
 
 base = '/Users/scholl/geo_uzh/';
 dataPath = 'data/KantonAargau/LeafOff/';
@@ -17,11 +18,9 @@ mat = load(fileMAT); data = mat.data;
 dtm = geotiffread(fileDTM);
 
 
-
 %% subset forest types
 
 % broad leaf
-
 x1 = 631760;
 x2 = 631860;
 y1 = 264610;
@@ -32,6 +31,7 @@ broadleaf.y =  data.y(ii);
 broadleaf.z =  data.z(ii);
 broadleaf.rnnr =  data.rnnr(ii);
 broadleaf.z_DTM = data.z_DTM(ii);
+broadleaf.classification = data.Classification(ii);
 
 % coniferous %tree_type = 'coniferous';
 x1 = 631840;
@@ -44,7 +44,7 @@ evergreen.y =  data.y(ii);
 evergreen.z =  data.z(ii);
 evergreen.rnnr =  data.rnnr(ii);
 evergreen.z_DTM = data.z_DTM(ii);
-
+evergreen.classification = data.Classification(ii);
 
 % normalize point clouds
 broadleaf.z_norm = broadleaf.z - broadleaf.z_DTM;
@@ -61,7 +61,7 @@ broadleaf.z1 = broadleaf.z(i);
 broadleaf.rnnr1 = broadleaf.rnnr(i); 
 broadleaf.z_DTM1 = broadleaf.z_DTM(i); 
 broadleaf.z_norm1 = broadleaf.z_norm(i);
-
+broadleaf.classification_norm1 = broadleaf.classification(i);
 
 r = evergreen.rnnr;
 i = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
@@ -71,7 +71,7 @@ evergreen.z1 = evergreen.z(i);
 evergreen.rnnr1 = evergreen.rnnr(i); 
 evergreen.z_DTM1 = evergreen.z_DTM(i); 
 evergreen.z_norm1 = evergreen.z_norm(i);
-
+evergreen.classification_norm1 = evergreen.classification(i);
 
 %% rasterize first echos 
 rasBroadleaf = raw2ras([broadleaf.x1,broadleaf.y1,broadleaf.z_norm1],res,res,'dsm');

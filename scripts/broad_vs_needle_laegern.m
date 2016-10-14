@@ -37,3 +37,9 @@ set(gca, 'FontSize', 14)
 xlabel('Easting [m]','FontSize',16); xtickangle(45)
 ylabel('Northing [m]','FontSize',16); ytickangle(45)
 title('Largern Crown Map - Deciduous / Coniferous','FontSize',16)
+
+%% Read Laegeren leaf off data and isolate deciduous trees 
+
+
+
+

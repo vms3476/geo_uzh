@@ -1,9 +1,5 @@
 
-% This script loads a merged point cloud of Spring 2010 Laegeren data
-% spatially subsets based on Fabian's morphological traits map
-% keeps first returns and generates a raster
-% overlays polygons. this will be helpful for validating the 
-% deciduous / coniferous classification
+% Spring 2010 Laegeren data
 
 base = '/Users/scholl/geo_uzh/';
 %dataPath = 'data/Laegeren/Spring_2010/PointCloud/';
@@ -94,7 +90,7 @@ title('Normalized raster - Laegern'); h = colorbar; xlabel(h,'Height [meters]','
 hold on;
 
 % plot polygons based on Fabian's tree morphology map.
-run broad_vs_needle_laegern.m
+% broad_vs_needle_laegern.m
 for i = 1:numel(data_idx_deciduous)
     x = laegernTreeTable_final.xPoly{data_idx_deciduous(i)};
     y = laegernTreeTable_final.yPoly{data_idx_deciduous(i)};
