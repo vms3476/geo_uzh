@@ -17,8 +17,8 @@ function s = LASclip(points, clipper, varargin)
 %    verbose (optional, default: false) - boolean value, verbosiy switch
 %
 % Example:
-%    points = '..\data\measurements\vector\als\6995_2710.las';
-%    outputFilepath = '..\data\measurements\vector\als\zh_6995_2710_subset.las';
+%    points = '../data/measurements/vector/als/6995_2710.las';
+%    outputFilepath = '../data/measurements/vector/als/zh_6995_2710_subset.las';
 %    xv = [699673; 699729; 699500; 699503];
 %    yv = [271341; 271036; 271042; 271346];
 %    s = LASclip(points, [xv, yv], outputFilepath, 'verbose', true);
@@ -182,11 +182,11 @@ if ~isempty(arg.Results.outputFilepath) && length(xc) >= 1
     % adjust output file name
     if exist(outputFilepath, 'file')
         
-        outputFilepath =  [pathstr, '\', name, '_v2.las'];
+        outputFilepath =  [pathstr, '/', name, '_v2.las'];
         
     else
         
-        outputFilepath =  [pathstr, '\', name, '.las'];
+        outputFilepath =  [pathstr, '/', name, '.las'];
         
     end
     

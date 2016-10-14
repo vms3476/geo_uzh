@@ -145,10 +145,16 @@ if arg.Results.fig
     
     figure
     
+    % added legend to label file boundaries, and give each a unique color. -VS
+    c = [linspace(0,1.0,n_tiles)];
+    legendEntries = [];
+    
     for j = 1:n_tiles
         
         plot([extent(j).xmin, extent(j).xmax, extent(j).xmax, extent(j).xmin, extent(j).xmin], ...
-            [extent(j).ymax, extent(j).ymax, extent(j).ymin, extent(j).ymin, extent(j).ymax], 'r-')
+            [extent(j).ymax, extent(j).ymax, extent(j).ymin, extent(j).ymin, extent(j).ymax], ...
+            'color', [c(j),0,0], 'LineWidth',2);
+        legendEntries = [legendEntries; filelist(j).name];
         hold on
         
     end
@@ -157,6 +163,7 @@ if arg.Results.fig
     title('Extents')
     xlabel('x')
     ylabel('y')
+    legend(legendEntries,'Location','northeastoutside')
     
 end
 
