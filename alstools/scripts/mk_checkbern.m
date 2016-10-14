@@ -1,4 +1,4 @@
-cc
+ycc
 % script for visualizing testdata of berner jura
 %cd /Volumes/Data2/BernerJura/DOM/Grid
 %dom = xyz2ras('1125_14.xyz');
