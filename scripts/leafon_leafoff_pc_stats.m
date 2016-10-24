@@ -42,23 +42,24 @@ files = dir('*.laz');
 if numel(files) > 0 
     for i = 1:numel(files)
         laz_name = [files(i).name];
-        las_name = laz_name(1:end-1);
+        las_name = [laz_name(1:end-1) 's'];
         if exist(las_name, 'file') == 0
             laszip = '/Users/scholl/LAStools/bin/laszip';
-            unix([laszip ' -i ' laz_name ' -o ' las_name 's']);
+            unix([laszip ' -i ' laz_name ' -o ' las_name]);
         end
     end
 end
+
 
 cd(dir_raw_on)
 files = dir('*.laz');
 if numel(files) > 0
     for i = 1:numel(files)
         laz_name = [files(i).name];
-        las_name = laz_name(1:end-1);
+        las_name = [laz_name(1:end-1) 's'];
         if exist(las_name, 'file') == 0
             laszip = '/Users/scholl/LAStools/bin/laszip';
-            unix([laszip ' -i ' laz_name ' -o ' las_name 's']);
+            unix([laszip ' -i ' laz_name ' -o ' las_name]);
         end
     end
 end
@@ -67,16 +68,18 @@ end
 %% Merge and read las files within study area
 
 raw_off_all = getrawlas(dir_raw_off,aoi);
-%raw_off_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2010_off/Pointcloud/data.las');
+% raw_off_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2014_off/Pointcloud/data.las');
 
 raw_on_all = getrawlas(dir_raw_on,aoi);
-%raw_on_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2010_on/Pointcloud/data.las');
+% raw_on_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2014_on/Pointcloud/data.las');
+
 
 
 %% interpolate dtm to the raw point coordinates
 load(dtmFilepath)
 [dtm.X,dtm.Y] = meshgrid(dtm.x,dtm.y);
 
+% normalize PC to DTM
 raw_off_all.tz = raw_off_all.z;
 raw_off_all.z = raw_off_all.tz - interp2(dtm.X,dtm.Y,dtm.z,raw_off_all.x,raw_off_all.y);
 
@@ -90,26 +93,34 @@ raw_off = subsetraw(raw_off_all,i);
 i = raw_on_all.z<50; 
 raw_on = subsetraw(raw_on_all,i);
 
-% remove points below a height of 3m, keep only crown returns. 
-i = raw_off.z>3; 
-raw_off = subsetraw(raw_off,i);
-
-i = raw_on.z>3; 
-raw_on = subsetraw(raw_on,i);
-
-%plot 
+% plot 
 figure; myscatter3(raw_off.x,raw_off.y,raw_off.z,raw_off.z,parula);
-title('Leaf Off PC Normalized'); colorbar; swisstick
+title([year ' Leaf Off PC Normalized']); colorbar; swisstick
 axis equal;axis tight;axis xy; caxis([0 50]); grid on
 
 figure; myscatter3(raw_on.x,raw_on.y,raw_on.z,raw_on.z,parula);
-title('Leaf On PC Normalized'); colorbar; swisstick
+title([year ' Leaf Off PC Normalized']); colorbar; swisstick
 axis equal;axis tight;axis xy; caxis([0 50]); grid on
 
 
-%% PC Statistics for leaf on - leaf off
+%% save DMT-normalized, noise-filtered PC mat files
 
-% subset based on crown polygons
+save(['/Users/scholl/geo_uzh/output/laegern/raw_' year '_leafoff_filtered.mat'], 'raw_off');
+save(['/Users/scholl/geo_uzh/output/laegern/raw_' year '_leafon_filtered.mat'], 'raw_on'); 
+
+%% load pc mat files
+
+raw_off_2010 = load('/Users/scholl/geo_uzh/output/laegern/raw_2010_leafoff_filtered.mat');
+raw_on_2010 = load('/Users/scholl/geo_uzh/output/laegern/raw_2010_leafon_filtered.mat');
+raw_off_2014 = load('/Users/scholl/geo_uzh/output/laegern/raw_2014_leafoff_filtered.mat');
+raw_on_2014 = load('/Users/scholl/geo_uzh/output/laegern/raw_2014_leafon_filtered.mat');
+
+raw_2010.leafOff = raw_off_2010.raw_off;
+raw_2010.leafOn = raw_on_2010.raw_on;
+raw_2014.leafOff = raw_off_2014.raw_off;
+raw_2014.leafOn = raw_on_2014.raw_on;
+
+%%  Read in crown polygons
 run crown_polygons_laegeren.m
 
 
@@ -140,18 +151,20 @@ for j = 1:n_trees
 %     d.FaceAlpha = 0.4;
     
     % calculate point cloud statistics 
-    stats_off.zMax(j,1) = max(zpoly);         % max height
-    stats_off.zMedian(j,1) = median(zpoly);   % median height
-    stats_off.zMean(j,1) = mean(zpoly);       % mean height
-    stats_off.zStd(j,1) = std(zpoly);         % standard deviation
+    zpoly_above3m = zpoly(zpoly>3);       % echo heights > 3m above ground
+    stats_off.zMax(j,1) = max(zpoly_above3m);       % max height
+    stats_off.zMedian(j,1) = median(zpoly_above3m); % median height
+    stats_off.zMean(j,1) = mean(zpoly_above3m);     % mean height
+    stats_off.zStd(j,1) = std(zpoly_above3m);       % standard deviation
     
-%     % fraction of single echos = # single / # total echos within crown
-%     % fraction of ground echos = # ground / # total echos within crown
-%     % compute statistics for the first returns? 
-%     r = raw2010_off.rnnr(in);  
-%     r1 = sum(r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71);
-%     stats.firstEchoFraction(j,1) = r1 / numel(r);
+    % fraction of single echos 
+    r = raw_off.rnnr(in);       
+    r1 = ismember(r,11) & (zpoly>3);         
+    stats_off.singleEchoFraction(j,1) = sum(r1) / numel(zpoly_above3m);
     
+    % fraction of ground echos (single returns < 0.5m)
+    g1 = ismember(r,11) & (zpoly<0.5);
+    stats_off.groundEchoFraction(j,1) = sum(g1) / numel(zpoly);
 end
 
 
@@ -168,54 +181,120 @@ for j = 1:n_trees
     zpoly = raw_on.z(in);
     
     % calculate point cloud statistics 
-    stats_on.zMax(j,1) = max(zpoly);         % max height
-    stats_on.zMedian(j,1) = median(zpoly);   % median height
-    stats_on.zMean(j,1) = mean(zpoly);       % mean height
-    stats_on.zStd(j,1) = std(zpoly);         % standard deviation
+    zpoly_above3m = zpoly(zpoly>3);       % echo heights > 3m above ground
+    stats_on.zMax(j,1) = max(zpoly_above3m);       % max height
+    stats_on.zMedian(j,1) = median(zpoly_above3m); % median height
+    stats_on.zMean(j,1) = mean(zpoly_above3m);     % mean height
+    stats_on.zStd(j,1) = std(zpoly_above3m);       % standard deviation
     
+    % fraction of single echos 
+    r = raw_on.rnnr(in);       
+    r1 = ismember(r,11) & (zpoly>3);         
+    stats_on.singleEchoFraction(j,1) = sum(r1) / numel(zpoly_above3m);
+    
+    % fraction of ground echos (single returns < 0.5m)
+    g1 = ismember(r,11) & (zpoly<0.5);
+    stats_on.groundEchoFraction(j,1) = sum(g1) / numel(zpoly);
 end
 
 
-%% save stats and pc structs to file
-
-save(['/Users/scholl/geo_uzh/output/laegern/raw_' year '_leafoff_filtered.mat'], 'raw_off');
-save(['/Users/scholl/geo_uzh/output/laegern/raw_' year '_leafon_filtered.mat'], 'raw_on');
+%% save stats structs to file
 
 save(['/Users/scholl/geo_uzh/output/laegern/stats_' year '_leafoff.mat'], 'stats_off');
 save(['/Users/scholl/geo_uzh/output/laegern/stats_' year '_leafon.mat'], 'stats_on');
 
+%% restrict to the 8 species in Felix's paper
 
-%% box plots of differences  leaf on - leaf off
+% load statistic mat files
+stats_off_2010 = load('/Users/scholl/geo_uzh/output/laegern/stats_2010_leafoff.mat');
+stats_on_2010 = load('/Users/scholl/geo_uzh/output/laegern/stats_2010_leafon.mat'); 
+stats_off_2014 = load('/Users/scholl/geo_uzh/output/laegern/stats_2014_leafoff.mat'); 
+stats_on_2014 = load('/Users/scholl/geo_uzh/output/laegern/stats_2010_leafon.mat'); 
 
-stats_off_2010 = ;
-stats_on_2010 = ; 
-stats_off_2014 = ; 
-stats_on_2014 = ; 
-
-% restrict to the 8 species in Felix's paper
+stats_2010.leafOff = stats_off_2010.stats_off;
+stats_2010.leafOn = stats_on_2010.stats_on;
+stats_2014.leafOff = stats_off_2014.stats_off;
+stats_2014.leafOn = stats_on_2014.stats_on;
 
 
 
-figure('Name',['Laegeren ' year ' Leaf Off - Leaf On Difference Boxplots']); 
+%% keep only species 11 14 22 23 29 31 56 59, each has 40 or more polygons
+k = ismember(stats_off_2010.stats_off.species,[11 14 22 23 29 31 56 59]); 
+stats_off_2010 = subsetraw(stats_off_2010.stats_off,k);
+stats_on_2010 = subsetraw(stats_on_2010.stats_on,k);
+stats_off_2014 = subsetraw(stats_off_2014.stats_off,k);
+stats_on_2014 = subsetraw(stats_on_2014.stats_on,k);
 
-subplot(4,1,1);
-dif_zMedian =  stats_off.zMedian - stats_on.zMedian; 
-boxplot(dif_zMedian,stats_off.species);title('median height'); 
+
+
+
+%% boxplots 
+
+
+% 2010 
+figure('Name','Laegeren 2010 Leaf Off - Leaf On Difference Boxplots'); 
+
+subplot(6,1,1);
+dif_zMax = stats_off_2010.zMax - stats_on_2010.zMax; 
+boxplot(dif_zMax,stats_off_2010.species);title('max height'); 
+line([0 20],[0 0],'color','k','linewidth',1); ylim([-3,3])
+
+subplot(6,1,2);
+dif_zMedian =  stats_off_2010.zMedian - stats_on_2010.zMedian; 
+boxplot(dif_zMedian,stats_off_2010.species);title('median height'); 
+line([0 20],[0 0],'color','k','linewidth',1); ylim([-4,3])
+
+subplot(6,1,3);
+dif_zStd = stats_off_2010.zStd - stats_on_2010.zStd; 
+boxplot(dif_zStd,stats_off_2010.species);title('std height'); 
 line([0 20],[0 0],'color','k','linewidth',1)
 
-subplot(4,1,2);
-dif_zMean = stats_off.zMean - stats_on.zMean; 
-boxplot(dif_zMean,stats_off.species);title('mean height'); 
+subplot(6,1,4);
+dif_zMean = stats_off_2010.zMean - stats_on_2010.zMean; 
+boxplot(dif_zMean,stats_off_2010.species);title('mean height'); 
 line([0 20],[0 0],'color','k','linewidth',1)
 
-subplot(4,1,3);
-dif_zMax = stats_off.zMax - stats_on.zMax; 
-boxplot(dif_zMax,stats_off.species);title('max height'); 
+subplot(6,1,5);
+dif_singleEchoFraction = stats_off_2010.singleEchoFraction - stats_on_2010.singleEchoFraction; 
+boxplot(dif_singleEchoFraction,stats_off_2010.species);title('fraction of single echos'); 
 line([0 20],[0 0],'color','k','linewidth',1)
 
-subplot(4,1,4);
-dif_zStd = stats_off.zStd - stats_on.zStd; 
-boxplot(dif_zStd,stats_off.species);title('std height'); 
+subplot(6,1,6);
+dif_groundEchoFraction = stats_off_2010.groundEchoFraction - stats_on_2010.groundEchoFraction; 
+boxplot(dif_groundEchoFraction,stats_off_2010.species);title('fraction of ground echos'); 
+line([0 20],[0 0],'color','k','linewidth',1); ylim([-0.3,0.8]);
+
+
+% 2014 
+figure('Name','Laegeren 2014 Leaf Off - Leaf On Difference Boxplots'); 
+
+subplot(6,1,1);
+dif_zMax = stats_off_2014.zMax - stats_on_2014.zMax; 
+boxplot(dif_zMax,stats_off_2014.species);title('max height'); 
+line([0 20],[0 0],'color','k','linewidth',1); ylim([-3,3])
+
+subplot(6,1,2);
+dif_zMedian =  stats_off_2014.zMedian - stats_on_2014.zMedian; 
+boxplot(dif_zMedian,stats_off_2014.species);title('median height'); 
+line([0 20],[0 0],'color','k','linewidth',1); ylim([-3,3])
+
+subplot(6,1,3);
+dif_zStd = stats_off_2014.zStd - stats_on_2014.zStd; 
+boxplot(dif_zStd,stats_off_2014.species);title('std height'); 
 line([0 20],[0 0],'color','k','linewidth',1)
 
+subplot(6,1,4);
+dif_zMean = stats_off_2014.zMean - stats_on_2014.zMean; 
+boxplot(dif_zMean,stats_off_2014.species);title('mean height'); 
+line([0 20],[0 0],'color','k','linewidth',1)
+
+subplot(6,1,5);
+dif_singleEchoFraction = stats_off_2014.singleEchoFraction - stats_on_2014.singleEchoFraction; 
+boxplot(dif_singleEchoFraction,stats_off_2014.species);title('fraction of single echos'); 
+line([0 20],[0 0],'color','k','linewidth',1)
+
+subplot(6,1,6);
+dif_groundEchoFraction = stats_off_2014.groundEchoFraction - stats_on_2014.groundEchoFraction; 
+boxplot(dif_groundEchoFraction,stats_off_2014.species);title('fraction of ground echos'); 
+line([0 20],[0 0],'color','k','linewidth',1); ylim([-0.2,0.4]);
 
