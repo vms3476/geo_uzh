@@ -65,14 +65,15 @@ if numel(files) > 0
 end
 
 
-%% Merge and read las files within study area
+%% Merge and read las files within study region
 
 raw_off_all = getrawlas(dir_raw_off,aoi);
 % raw_off_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2014_off/Pointcloud/data.las');
+% raw_off_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2010_off/Pointcloud/data.las');
 
 raw_on_all = getrawlas(dir_raw_on,aoi);
 % raw_on_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2014_on/Pointcloud/data.las');
-
+% raw_on_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2010_on/Pointcloud/data.las');
 
 
 %% interpolate dtm to the raw point coordinates
@@ -108,17 +109,6 @@ axis equal;axis tight;axis xy; caxis([0 50]); grid on
 save(['/Users/scholl/geo_uzh/output/laegern/raw_' year '_leafoff_filtered.mat'], 'raw_off');
 save(['/Users/scholl/geo_uzh/output/laegern/raw_' year '_leafon_filtered.mat'], 'raw_on'); 
 
-%% load pc mat files
-
-raw_off_2010 = load('/Users/scholl/geo_uzh/output/laegern/raw_2010_leafoff_filtered.mat');
-raw_on_2010 = load('/Users/scholl/geo_uzh/output/laegern/raw_2010_leafon_filtered.mat');
-raw_off_2014 = load('/Users/scholl/geo_uzh/output/laegern/raw_2014_leafoff_filtered.mat');
-raw_on_2014 = load('/Users/scholl/geo_uzh/output/laegern/raw_2014_leafon_filtered.mat');
-
-raw_2010.leafOff = raw_off_2010.raw_off;
-raw_2010.leafOn = raw_on_2010.raw_on;
-raw_2014.leafOff = raw_off_2014.raw_off;
-raw_2014.leafOn = raw_on_2014.raw_on;
 
 %%  Read in crown polygons
 run crown_polygons_laegeren.m
@@ -164,7 +154,8 @@ for j = 1:n_trees
     
     % fraction of ground echos (single returns < 0.5m)
     g1 = ismember(r,11) & (zpoly<0.5);
-    stats_off.groundEchoFraction(j,1) = sum(g1) / numel(zpoly);
+    %stats_off.groundEchoFraction(j,1) = sum(g1) / numel(zpoly);
+    stats_on.groundEchoFraction(j,1) = sum(g1) / numel(zpoly_above3m);
 end
 
 
@@ -172,9 +163,8 @@ end
 stats_on.idField = laegernTreeTable_final.idField;
 stats_on.species = laegernTreeTable_final.species;
 
-% figure; hold on; title('Leaf On - Crown Polygons and associated points');
 for j = 1:n_trees     
-    % find raw las points within current polygon
+     % find raw las points within current polygon
     xpoly = laegernTreeTable_final.xPoly{j};
     ypoly = laegernTreeTable_final.yPoly{j};
     in = inpolygon(raw_on.x,raw_on.y,xpoly,ypoly);
@@ -194,7 +184,8 @@ for j = 1:n_trees
     
     % fraction of ground echos (single returns < 0.5m)
     g1 = ismember(r,11) & (zpoly<0.5);
-    stats_on.groundEchoFraction(j,1) = sum(g1) / numel(zpoly);
+    %stats_on.groundEchoFraction(j,1) = sum(g1) / numel(zpoly);
+    stats_on.groundEchoFraction(j,1) = sum(g1) / numel(zpoly_above3m);
 end
 
 
@@ -203,30 +194,43 @@ end
 save(['/Users/scholl/geo_uzh/output/laegern/stats_' year '_leafoff.mat'], 'stats_off');
 save(['/Users/scholl/geo_uzh/output/laegern/stats_' year '_leafon.mat'], 'stats_on');
 
+%% load lidar mat files 
+raw_off_2010 = load('/Users/scholl/geo_uzh/output/laegern/raw_2010_leafoff_filtered.mat');
+raw_on_2010 = load('/Users/scholl/geo_uzh/output/laegern/raw_2010_leafon_filtered.mat');
+raw_off_2014 = load('/Users/scholl/geo_uzh/output/laegern/raw_2014_leafoff_filtered.mat');
+raw_on_2014 = load('/Users/scholl/geo_uzh/output/laegern/raw_2014_leafon_filtered.mat');
+
+raw_2010.leafOff = raw_off_2010.raw_off;
+raw_2010.leafOn = raw_on_2010.raw_on;
+raw_2014.leafOff = raw_off_2014.raw_off;
+raw_2014.leafOn = raw_on_2014.raw_on;
+
 %% restrict to the 8 species in Felix's paper
 
 % load statistic mat files
 stats_off_2010 = load('/Users/scholl/geo_uzh/output/laegern/stats_2010_leafoff.mat');
 stats_on_2010 = load('/Users/scholl/geo_uzh/output/laegern/stats_2010_leafon.mat'); 
 stats_off_2014 = load('/Users/scholl/geo_uzh/output/laegern/stats_2014_leafoff.mat'); 
-stats_on_2014 = load('/Users/scholl/geo_uzh/output/laegern/stats_2010_leafon.mat'); 
+stats_on_2014 = load('/Users/scholl/geo_uzh/output/laegern/stats_2014_leafon.mat'); 
 
-stats_2010.leafOff = stats_off_2010.stats_off;
-stats_2010.leafOn = stats_on_2010.stats_on;
-stats_2014.leafOff = stats_off_2014.stats_off;
-stats_2014.leafOn = stats_on_2014.stats_on;
+stats_2010.leafOff = stats_off_2010.stats_2010_leafoff;
+stats_2010.leafOn = stats_on_2010.stats_2010_leafon;
+stats_2014.leafOff = stats_off_2014.stats_2014_leafoff;
+stats_2014.leafOn = stats_on_2014.stats_2014_leafon;
 
 
 
 %% keep only species 11 14 22 23 29 31 56 59, each has 40 or more polygons
 k = ismember(stats_off_2010.stats_off.species,[11 14 22 23 29 31 56 59]); 
-stats_off_2010 = subsetraw(stats_off_2010.stats_off,k);
-stats_on_2010 = subsetraw(stats_on_2010.stats_on,k);
-stats_off_2014 = subsetraw(stats_off_2014.stats_off,k);
-stats_on_2014 = subsetraw(stats_on_2014.stats_on,k);
+% stats_off_2010 = subsetraw(stats_off_2010.stats_off,k);
+% stats_on_2010 = subsetraw(stats_on_2010.stats_on,k);
+% stats_off_2014 = subsetraw(stats_off_2014.stats_off,k);
+% stats_on_2014 = subsetraw(stats_on_2014.stats_on,k);
 
-
-
+stats_off_2010 = subsetraw(stats_2010.leafOff,k);
+stats_on_2010 = subsetraw(stats_2010.leafOn,k);
+stats_off_2014 = subsetraw(stats_2014.leafOff,k);
+stats_on_2014 = subsetraw(stats_2014.leafOn,k);
 
 %% boxplots 
 
@@ -262,7 +266,7 @@ line([0 20],[0 0],'color','k','linewidth',1)
 subplot(6,1,6);
 dif_groundEchoFraction = stats_off_2010.groundEchoFraction - stats_on_2010.groundEchoFraction; 
 boxplot(dif_groundEchoFraction,stats_off_2010.species);title('fraction of ground echos'); 
-line([0 20],[0 0],'color','k','linewidth',1); ylim([-0.3,0.8]);
+line([0 20],[0 0],'color','k','linewidth',1); ylim([-0.2,0.4]);
 
 
 % 2014 
@@ -297,4 +301,8 @@ subplot(6,1,6);
 dif_groundEchoFraction = stats_off_2014.groundEchoFraction - stats_on_2014.groundEchoFraction; 
 boxplot(dif_groundEchoFraction,stats_off_2014.species);title('fraction of ground echos'); 
 line([0 20],[0 0],'color','k','linewidth',1); ylim([-0.2,0.4]);
+
+
+%% testing different ground echo fraction calculations 
+
 
