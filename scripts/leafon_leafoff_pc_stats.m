@@ -406,8 +406,11 @@ rasters.leafon_2014.mean = ras_mean; rasters.leafon_2014.num = ras_num;
 figure('Name','2010 Leaf OFF: Average First Echo Height (LEFT), Number of first returns (RIGHT), 0.5x0.5m raster'); 
 subplot(1,2,1); 
 myimage(rasters.leafoff_2010.mean.x,rasters.leafoff_2010.mean.y,rasters.leafoff_2010.mean.int); colorbar; axis tight
+overlay_polygons(laegernTreeTable_final)
+
 subplot(1,2,2); 
 myimage(rasters.leafoff_2010.num.x,rasters.leafoff_2010.num.y,rasters.leafoff_2010.num.z); colorbar; caxis([0,10]); 
+overlay_polygons(laegernTreeTable_final)
 
 figure('Name','2010 Leaf ON: Average First Echo Height (LEFT), Number of first returns (RIGHT), 0.5x0.5m raster'); 
 subplot(1,2,1); 
