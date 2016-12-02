@@ -11,8 +11,9 @@ raw_off_all.z = raw_off_all.tz - interp2(dtm.X,dtm.Y,dtm.z,raw_off_all.x,raw_off
 raw_off_all = subsetraw(raw_off_all,raw_off_all.z<50);
 % plot 
 figure; myscatter3(raw_off_all.x,raw_off_all.y,raw_off_all.z,raw_off_all.z,parula); hold on;
-title(['2010 Leaf Off PC Normalized']); colorbar; %swisstick
-axis equal;axis tight;axis xy; caxis([0 50]); grid on
+title('2010 Leaf Off PC Normalized','FontSize',14); colorbar; %swisstick
+axis equal;axis tight;axis xy; caxis([0 50]); grid on; xlabel('Easting','FontSize',14); ylabel('Northing','FontSize',14);
+view(2); set(gcf,'position',[500 500 1000 1000])
 load('/Users/scholl/geo_uzh/data/Fabian/laegernTreeTable_final20160629.mat')
 overlay_polygons(laegernTreeTable_final)
 
@@ -67,11 +68,13 @@ int1 = int(1:end-1);
 int1(~ii) = [];
 
 % plot first-last return data with crown polygons overlaid
-figure; myscatter3(xDif,yDif,zDif,zDif,gray); swisstick;
+figure; myscatter3(xDif,yDif,zDif,zDif,gray); 
 overlay_polygons(laegernTreeTable_final)
-title(['2010 Leaf Off Laegeren'],'FontSize',14); c = colorbar; swisstick
+title('2010 Leaf Off Laegeren','FontSize',14); c = colorbar; 
+xlabel('Easting','FontSize',14); ylabel('Northing','FontSize',14);
 axis equal;axis tight;axis xy; caxis([0 round(max(zDif))]); grid on;
 ylabel(c,'First-Last Echo Heigh Difference [m]','FontSize',14)
+view(2); set(gcf,'position',[500 500 1000 1000])
 
 % for testing, vertically stack the return number, diff(return number), 
 % indices of first return pairs to keep for analysis, difference values
@@ -82,14 +85,16 @@ a(3,:) = [ii 0.0];
 a(4,:) = [dz 0.0];
 
 % determine average first-last pulse distance difference per polygon
-n_trees = size(laegernTreeTable_final,1);
-stats.idField = laegernTreeTable_final.idField;
-stats.species = laegernTreeTable_final.species;
+k = ismember(laegernTreeTable_final.species,[11 14 22 23 29 31 56 59]); 
+trees = laegernTreeTable_final(k,:);
+n_trees = numel(trees.species); 
+stats.idField = trees.idField;
+stats.species = trees.species;
 for tree = 1:n_trees     
     
     % find raw las points within current polygon
-    xpoly = laegernTreeTable_final.xPoly{tree};
-    ypoly = laegernTreeTable_final.yPoly{tree};
+    xpoly = trees.xPoly{tree};
+    ypoly = trees.yPoly{tree};
     in = inpolygon(xDif,yDif,xpoly,ypoly);
     zpoly = zDif(in);
     intPoly = int1(in); % intensity of first returns in polygon
@@ -98,18 +103,19 @@ for tree = 1:n_trees
     stats.meanInt(tree,1) = mean(intPoly);
 end
 
-% keep only species 11 14 22 23 29 31 56 59, each has 40 or more polygons
-k = ismember(stats.species,[11 14 22 23 29 31 56 59]); 
-stats_plot = subsetraw(stats,k);
+% % keep only species 11 14 22 23 29 31 56 59, each has 40 or more polygons
+% k = ismember(stats.species,[11 14 22 23 29 31 56 59]); 
+% stats_plot = subsetraw(stats,k);
 
 % average first-last echo height difference boxplot
-figure; boxplot(stats_plot.zDif,stats_plot.species);title('2010 Laegeren first-last echo height difference per pulse','FontSize',14); 
+figure; boxplot(stats.zDif,stats.species);title('2010 Laegeren first-last echo height difference per pulse','FontSize',14); 
 xlabel('Species','FontSize',14); ylabel('average height difference within crown polygon','FontSize',14);
+set(gca,'fontsize',14); set(gcf,'position',[500 500 1000 1000])
 
 % mean intensity boxplot
-figure; boxplot(stats_plot.meanInt,stats_plot.species);title('2010 Laegeren first echo average intensity per pulse','FontSize',14); 
+figure; boxplot(stats.meanInt,stats.species);title('2010 Laegeren first echo average intensity per pulse','FontSize',14); 
 xlabel('Species','FontSize',14); ylabel('average first echo intensity within crown polygon','FontSize',14);
-
+set(gca,'fontsize',14); set(gcf,'position',[500 500 1000 1000])
 
 %% classification 
 
