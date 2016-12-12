@@ -289,3 +289,5 @@ subplot(6,1,4);
 dif_zMean = stats_2014_leafoff.zMean - stats_2014_leafon.zMean; 
 boxplot(dif_zMean,species);title('mean height'); 
 line([0 20],[0 0],'color','k','linewidth',1)
+
+%% 

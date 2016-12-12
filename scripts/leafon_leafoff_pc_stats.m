@@ -69,7 +69,7 @@ end
 
 raw_off_all = getrawlas(dir_raw_off,aoi);
 % raw_off_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2014_off/raw_2014_off.las');
-% raw_off_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2010_off/Pointcloud/data.las');
+% raw_off_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2010_off/raw_2010_leafoff.las');
 
 raw_on_all = getrawlas(dir_raw_on,aoi);
 % raw_on_all = readlas('/Users/scholl/geo_uzh/data/Laegeren/2014_on/raw_2014_on.las');
@@ -363,71 +363,83 @@ line([0 20],[0 0],'color','k','linewidth',1); ylim([-0.2,0.4]);
 
     % 2010 
 % leaf off 
+disp('2010 leaf off rasters being created...')
 r = raw_2010.leafOff.rnnr;
 r1 = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
 raw_2010.leafOff_r1 = subsetraw(raw_2010.leafOff,r1);
-
 % raster with mean first echo height per cell 
 ras_mean = raw2ras([raw_2010.leafOff_r1.x,raw_2010.leafOff_r1.y,raw_2010.leafOff_r1.z],0.5,0.5,'int');
 % raster with number of first echos per cell
-ras_num = raw2ras([raw_2010.leafOff_r1.x,raw_2010.leafOff_r1.y,raw_2010.leafOff_r1.z],0.5,0.5,'den');
-
-rasters.leafoff_2010.mean = ras_mean; rasters.leafoff_2010.num = ras_num; 
+ras_num_r1 = raw2ras([raw_2010.leafOff_r1.x,raw_2010.leafOff_r1.y,raw_2010.leafOff_r1.z],0.5,0.5,'den');
+% raster with number of total echos per cell
+ras_num_rtotal = raw2ras([raw_2010.leafOff.x,raw_2010.leafOff.y,raw_2010.leafOff.z],0.5,0.5,'den');
+rasters.leafoff_2010.mean = ras_mean; 
+rasters.leafoff_2010.num = ras_num_r1.z ./ ras_num_rtotal.z;
 
 % leaf on 
+disp('2010 leaf on rasters being created...')
 r = raw_2010.leafOn.rnnr;
 r1 = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
 raw_2010.leafOn_r1 = subsetraw(raw_2010.leafOn,r1);
 ras_mean = raw2ras([raw_2010.leafOn_r1.x,raw_2010.leafOn_r1.y,raw_2010.leafOn_r1.z],0.5,0.5,'int');
-ras_num = raw2ras([raw_2010.leafOn_r1.x,raw_2010.leafOn_r1.y,raw_2010.leafOn_r1.z],0.5,0.5,'den');
-rasters.leafon_2010.mean = ras_mean; rasters.leafon_2010.num = ras_num; 
+ras_num_r1 = raw2ras([raw_2010.leafOn_r1.x,raw_2010.leafOn_r1.y,raw_2010.leafOn_r1.z],0.5,0.5,'den');
+ras_num_rtotal = raw2ras([raw_2010.leafOn.x,raw_2010.leafOn.y,raw_2010.leafOn.z],0.5,0.5,'den');
+rasters.leafon_2010.mean = ras_mean; 
+rasters.leafon_2010.num = ras_num_r1.z ./ ras_num_rtotal.z; 
 
     % 2014
-% leaf off    
+% leaf off   
+disp('2014 leaf off rasters being created...')
 r = raw_2014.leafOff.rnnr;
 r1 = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
 raw_2014.leafOff_r1 = subsetraw(raw_2014.leafOff,r1);
 ras_mean = raw2ras([raw_2014.leafOff_r1.x,raw_2014.leafOff_r1.y,raw_2014.leafOff_r1.z],0.5,0.5,'int');
-ras_num = raw2ras([raw_2014.leafOff_r1.x,raw_2014.leafOff_r1.y,raw_2014.leafOff_r1.z],0.5,0.5,'den');
-rasters.leafoff_2014.mean = ras_mean; rasters.leafoff_2014.num = ras_num;    
+ras_num_r1 = raw2ras([raw_2014.leafOff_r1.x,raw_2014.leafOff_r1.y,raw_2014.leafOff_r1.z],0.5,0.5,'den');
+ras_num_rtotal = raw2ras([raw_2014.leafOff.x,raw_2014.leafOff.y,raw_2014.leafOff.z],0.5,0.5,'den');
+rasters.leafoff_2014.mean = ras_mean; 
+rasters.leafoff_2014.num = ras_num_r1.z ./ ras_num_rtotal.z;   
 
 % leaf on
+disp('2014 leaf on rasters being created...')
 r = raw_2014.leafOn.rnnr;
 r1 = r==11 | r==21 | r==31 | r==41 | r==51 |r==61 | r==71;
 raw_2014.leafOn_r1 = subsetraw(raw_2014.leafOn,r1);
 ras_mean = raw2ras([raw_2014.leafOn_r1.x,raw_2014.leafOn_r1.y,raw_2014.leafOn_r1.z],0.5,0.5,'int');
-ras_num = raw2ras([raw_2014.leafOn_r1.x,raw_2014.leafOn_r1.y,raw_2014.leafOn_r1.z],0.5,0.5,'den');
-rasters.leafon_2014.mean = ras_mean; rasters.leafon_2014.num = ras_num; 
+ras_num_r1 = raw2ras([raw_2014.leafOn_r1.x,raw_2014.leafOn_r1.y,raw_2014.leafOn_r1.z],0.5,0.5,'den');
+ras_num_rtotal = raw2ras([raw_2014.leafOn.x,raw_2014.leafOn.y,raw_2014.leafOn.z],0.5,0.5,'den');
+rasters.leafon_2014.mean = ras_mean; 
+rasters.leafon_2014.num = ras_num_r1.z ./ ras_num_rtotal.z; 
 
 
 
 %% display rasters
 
 figure('Name','2010 Leaf OFF: Average First Echo Height (LEFT), Number of first returns (RIGHT), 0.5x0.5m raster'); 
-subplot(1,2,1); 
-myimage(rasters.leafoff_2010.mean.x,rasters.leafoff_2010.mean.y,rasters.leafoff_2010.mean.int); colorbar; axis tight
-overlay_polygons(laegernTreeTable_final)
+subplot(1,2,1); myimage(rasters.leafoff_2010.mean.x,rasters.leafoff_2010.mean.y,rasters.leafoff_2010.mean.int);
+c = colorbar; ylabel(c,'average first echo height [m]','FontSize',14); axis tight;
+%overlay_polygons(laegernTreeTable_final)
 
 subplot(1,2,2); 
-myimage(rasters.leafoff_2010.num.x,rasters.leafoff_2010.num.y,rasters.leafoff_2010.num.z); colorbar; caxis([0,10]); 
-overlay_polygons(laegernTreeTable_final)
+myimage(rasters.leafoff_2010.mean.x,rasters.leafoff_2010.mean.y,rasters.leafoff_2010.num); 
+c = colorbar; ylabel(c,'fraction of first returns per cell','FontSize',14); axis tight;
+%overlay_polygons(laegernTreeTable_final)
 
 figure('Name','2010 Leaf ON: Average First Echo Height (LEFT), Number of first returns (RIGHT), 0.5x0.5m raster'); 
-subplot(1,2,1); 
-myimage(rasters.leafon_2010.mean.x,rasters.leafon_2010.mean.y,rasters.leafon_2010.mean.int); colorbar
-subplot(1,2,2); 
-myimage(rasters.leafon_2010.num.x,rasters.leafon_2010.num.y,rasters.leafon_2010.num.z); colorbar; caxis([0,10]);
+subplot(1,2,1); myimage(rasters.leafon_2010.mean.x,rasters.leafon_2010.mean.y,rasters.leafon_2010.mean.int); 
+c = colorbar; ylabel(c,'average first echo height [m]','FontSize',14); axis tight;
+subplot(1,2,2); myimage(rasters.leafon_2010.mean.x,rasters.leafon_2010.mean.y,rasters.leafon_2010.num); 
+c = colorbar; ylabel(c,'fraction of first returns per cell','FontSize',14); axis tight; caxis([0,1]);
 
 figure('Name','2014 Leaf OFF: Average First Echo Height (LEFT), Number of first returns (RIGHT), 0.5x0.5m raster'); 
-subplot(1,2,1); 
-myimage(rasters.leafoff_2014.mean.x,rasters.leafoff_2014.mean.y,rasters.leafoff_2014.mean.int); colorbar
-subplot(1,2,2); 
-myimage(rasters.leafoff_2014.num.x,rasters.leafoff_2014.num.y,rasters.leafoff_2014.num.z); colorbar; caxis([0,10]); 
+subplot(1,2,1); myimage(rasters.leafoff_2014.mean.x,rasters.leafoff_2014.mean.y,rasters.leafoff_2014.mean.int); 
+c = colorbar; ylabel(c,'average first echo height [m]','FontSize',14); axis tight;
+subplot(1,2,2); myimage(rasters.leafoff_2014.mean.x,rasters.leafoff_2014.mean.y,rasters.leafoff_2014.num); 
+c = colorbar; ylabel(c,'fraction of first returns per cell','FontSize',14); axis tight; caxis([0,1]);
 
 figure('Name','2014 Leaf ON Average First Echo Height (LEFT), Number of first returns (RIGHT), 0.5x0.5m raster'); 
-subplot(1,2,1); 
-myimage(rasters.leafon_2014.mean.x,rasters.leafon_2014.mean.y,rasters.leafon_2014.mean.int); colorbar
-subplot(1,2,2); 
-myimage(rasters.leafon_2014.num.x,rasters.leafon_2014.num.y,rasters.leafon_2014.num.z); colorbar; caxis([0,10]);
+subplot(1,2,1); myimage(rasters.leafon_2014.mean.x,rasters.leafon_2014.mean.y,rasters.leafon_2014.mean.int); 
+c = colorbar; ylabel(c,'average first echo height [m]','FontSize',14); axis tight;
+subplot(1,2,2); myimage(rasters.leafon_2014.mean.x,rasters.leafon_2014.mean.y,rasters.leafon_2014.num); 
+c = colorbar; ylabel(c,'fraction of first returns per cell','FontSize',14); axis tight; caxis([0,1]);
 
 %% 

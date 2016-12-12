@@ -225,3 +225,34 @@ title('Leaf On'); swisstick
 % zlim([0,z_max]);
 % colorbar
 
+%% geotiff testing 
+%% 2014 DTM is in two tiles 
+
+% tile 669000_258000
+% %raw =  readlas('/Users/scholl/geo_uzh/data/Laegeren/2014_off/Pointcloud/669000_258000.las'); 
+% raw1_off_all = load('/Users/scholl/geo_uzh/data/Laegeren/2014_off/669000_258000_leaf_off.mat'); raw1_off_all = raw1_off_all.data;
+% raw1_on_all = load('/Users/scholl/geo_uzh/data/Laegeren/2014_off/669000_258000_leaf_off.mat');
+% 
+% % z_AG field is the normalized PC above DTM 
+% raw_off = subsetraw(raw1_off_all, raw1_off_all < 50);
+
+dtm1File = '/Users/scholl/geo_uzh/data/Laegeren/2014_off/DTM_669000_258000.tif';
+dtm1.info = geotiffinfo(dtm1File); 
+dtm1.z = geotiffread(dtm1File);
+dtm1.x = linspace(info.BoundingBox(1,1),info.BoundingBox(2,1), info.Width);
+dtm1.y = linspace(info.BoundingBox(1,2),info.BoundingBox(2,2), info.Height);
+[dtm1.X, dtm1.Y] = meshgrid(dtm1.x,dtm1.y); 
+
+% tile 669000_259000
+dtm2File = '/Users/scholl/geo_uzh/data/Laegeren/2014_off/DTM_669000_259000.tif';
+dtm2.info = geotiffinfo(dtm2File); 
+dtm2.z = geotiffread(dtm2File);
+dtm2.x = linspace(info.BoundingBox(1,1),info.BoundingBox(2,1), info.Width);
+dtm2.y = linspace(info.BoundingBox(1,2),info.BoundingBox(2,2), info.Height);
+[dtm2.X, dtm2.Y] = meshgrid(dtm2.x,dtm2.y); 
+dtm2.z(dtm2.z<0) = 0; 
+
+figure; hold on; myscatter3(dtm1.X(:),dtm1.Y(:),dtm1.z(:),dtm1.z(:),parula)
+myscatter3(dtm2.X(:),dtm2.Y(:),dtm2.z(:),dtm2.z(:),parula)
+
+

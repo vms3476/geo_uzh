@@ -42,7 +42,7 @@ tic
     yDif = y(ii); 
     zDif = -dz(ii); 
 
-    % calculate raster, count the total number of zDif values ('den')
+    % calculate raster, median zDif values ('dtm')
     ras1mDtm = raw2ras([xDif;yDif;zDif]',res,1,'dtm'); ras1mDtmInterp = inpaint_nans(ras1mDtm.z,4);
     X(:,1) = ras1mDtmInterp(:); 
 
@@ -87,7 +87,16 @@ tic
 
     toc
     disp('feature 6 computed')
+% 
+% % plots 
+% figure; myimage(ras1mDtm.x,ras1mDtm.y,ras1mDtmInterp);
+% figure; myimage(ras1mDtm.x,ras1mDtm.y,singleEchosInt.int);
+% figure; myimage(ras1mDtm.x,ras1mDtm.y,singleEchosDen.z);
+% figure; myimage(ras1mDtm.x,ras1mDtm.y,zMedian.z);
+% figure; myimage(ras1mDtm.x,ras1mDtm.y,zMedian.std);
+% figure; myimage(ras1mDtm.x,ras1mDtm.y,zMax.z);
 
+    
 
 end
 

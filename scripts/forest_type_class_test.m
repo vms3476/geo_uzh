@@ -2,6 +2,8 @@
 % experimenting with the forest type classification thresholds
 % treating the WSL map as truth
 
+
+% ground-normalized LAS data with ground and vegetation classes 
 lasDir = '/Users/scholl/geo_uzh/data/KantonAargau/batch3/';
 
 cd(lasDir)
@@ -45,6 +47,13 @@ wsl.data(wsl.data==3) = 0; % assign pixels with "no data" as non-veg, 0
 figure;myscatter3(wsl.X(:),wsl.Y(:),wsl.data(:),wsl.data(:),gray); view(2); 
 title('WSL Forest Type','FontSize',14); swisstick
 
+
+% % tree type masks 
+% maskB = zeros(numel(wsl.y),numel(wsl.x)); % broadleaf
+% maskB(wsl.data == 1) = 1; 
+% 
+% maskC = zeros(numel(wsl.y),numel(wsl.x)); % coniferous
+% maskC(wsl.data == 2) = 1; 
 
 
 %% variables of interest for entire tile 

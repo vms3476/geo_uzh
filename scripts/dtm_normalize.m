@@ -70,11 +70,11 @@ myscatter3(raw2.x,raw2.y,raw2.ch,raw2.ch,parula);
 title([year ' Leaf ' leaf 'PC Normalized < 50m']); colorbar; swisstick
 axis equal;axis tight;axis xy; caxis([0 50]); grid on
 
-% merge the normalized las data for both tiles
-raw1.record = raw1;
-raw2.record = raw2; 
-inputLas = {raw2, raw1};
-raw_2014_off = LASmerge(inputLas)
+% % merge the normalized las data for both tiles
+% raw1.record = raw1;
+% raw2.record = raw2; 
+% inputLas = {raw2, raw1};
+% raw_2014_off = LASmerge(inputLas)
 
 % merge 
 fields = fieldnames(raw1);
@@ -99,14 +99,26 @@ stats_off.species = laegernTreeTable_final.species;
 stats_off.xPoly = laegernTreeTable_final.xPoly;
 stats_off.yPoly = laegernTreeTable_final.yPoly;
 
-% 2010
+%% 2010
 
+% leaf off
 raw_off = load('/Users/scholl/geo_uzh/data/Laegeren/crown_map_subset/laegern_2010_leafoff_pc_norm.mat');
 raw_off = raw_off.raw;
+% leaf on
+raw_on = load('/Users/scholl/geo_uzh/data/Laegeren/crown_map_subset/laegern_2010_leafon_pc_norm.mat');
+raw_on = raw_on.raw;
 
+%% 2014
+% leaf off
+raw_off = load('/Users/scholl/geo_uzh/data/Laegeren/crown_map_subset/laegern_2014_leafoff_pc_norm.mat');
+raw_off = raw_off.merged;
+% leaf on
+raw_on = load('/Users/scholl/geo_uzh/data/Laegeren/crown_map_subset/laegern_2014_leafon_pc_norm.mat');
+raw_on = raw_on.merged;
 
+%% calculate
 for j = 1:n_trees     
-    
+    j
     % find raw las points within current polygon
     xpoly = laegernTreeTable_final.xPoly{j};
     ypoly = laegernTreeTable_final.yPoly{j};
@@ -137,9 +149,7 @@ for j = 1:n_trees
     stats_off.groundEchoFraction(j,1) = sum(g1) / numel(zpoly_above3m);
 end
 
-% leaf on
-raw_on = load('/Users/scholl/geo_uzh/data/Laegeren/crown_map_subset/laegern_2010_leafon_pc_norm.mat');
-raw_on = raw_on.raw;
+
 
 for j = 1:n_trees     
      % find raw las points within current polygon

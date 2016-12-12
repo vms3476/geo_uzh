@@ -21,13 +21,13 @@ figure;
 for i = 1:numel(data_idx_deciduous)
     x = laegernTreeTable_final.xPoly{data_idx_deciduous(i)};
     y = laegernTreeTable_final.yPoly{data_idx_deciduous(i)};
-    d = patch(x,y,[0 0.4 0.8]);
+    d = patch(x,y,[0 0.4 0.8],'FaceAlpha',0,'EdgeColor',[1 1 1]);
 end
 
 for i = 1:numel(data_idx_coniferous)
     x = laegernTreeTable_final.xPoly{data_idx_coniferous(i)};
     y = laegernTreeTable_final.yPoly{data_idx_coniferous(i)};
-    c = patch(x,y,[0, 0.8, 0.4]);
+    c = patch(x,y,[0, 0.8, 0.4],'FaceAlpha',0,'EdgeColor',[0 1 0.5]);
 end
 
 legend([d,c],'Deciduous','Coniferous')

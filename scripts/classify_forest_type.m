@@ -1,9 +1,11 @@
 % forest type classification script
 % utilizes firts-last echo height difference algorithm by Liang et al. 
 
+% specify directory with LAZ and/or LAS file,  plus DTM geotiff per tile
+lasDir = '/Users/scholl/geo_uzh/data/KantonAargau/batch3/';
 
-lasDir = '/Users/scholl/geo_uzh/data/KantonAargau/batch1/'; 
-lasDir = '/Users/scholl/geo_uzh/data/KantonAargau/batch1/';
+% output filepath for geotiff class maps
+outPath = '/Users/scholl/geo_uzh/data/KantonAargau/output/batch3/';
 
 % convert from laz to las 
 cd(lasDir)
@@ -33,9 +35,6 @@ end
         conng = 4;
     % structural element for smoothing
         se = strel('disk',3);
-
-% output filepath for geotiff class maps
-outPath = '/Users/scholl/geo_uzh/data/KantonAargau/output/batch1/';
         
 tic 
 
@@ -82,7 +81,6 @@ for i = 1:numel(files)
     % create raster for classification of ground
     disp('     Ground classification...')
     ras1mGrnd = raw2ras([x;y;classification]',1,1,'dsm');
-
 
     % find indices of first returns for first-last echo pairs
     % only keep negative differences
