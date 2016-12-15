@@ -44,7 +44,10 @@ tic
 
     % calculate raster, median zDif values ('dtm')
     ras1mDtm = raw2ras([xDif;yDif;zDif]',res,1,'dtm'); ras1mDtmInterp = inpaint_nans(ras1mDtm.z,4);
-    X(:,1) = ras1mDtmInterp(:); 
+    
+    % normalize and add to X array 
+    %X(:,1) = normalize_unity(ras1mDtmInterp); 
+    X(:,1) = ras1mDtmInterp(:);
 
     toc
     disp('feature 1 computed')
@@ -56,6 +59,7 @@ tic
     z = las.z(i);
     int = las.int(i);
     singleEchosInt = raw2ras([x,y,int],res,1,'int'); singleEchosInt.int = inpaint_nans(singleEchosInt.int,4);
+    %X(:,2) = normalize_unity(singleEchosInt.int);
     X(:,2) = singleEchosInt.int(:);
 
     toc
@@ -63,6 +67,7 @@ tic
     
 % feature 3: number of single echos
     singleEchosDen = raw2ras([x,y,z],res,1,'den'); singleEchosDen.z = inpaint_nans(singleEchosDen.z,4);
+    %X(:,3) = normalize_unity(singleEchosDen.z);
     X(:,3) = singleEchosDen.z(:);
 
     toc
@@ -70,24 +75,40 @@ tic
     
 % feature 4: median echo height 
     zMedian = raw2ras([las.x,las.y,las.z],res,1,'dtm'); zMedian.z = inpaint_nans(zMedian.z,4); 
+    %X(:,4) = normalize_unity(zMedian.z);
     X(:,4) = zMedian.z(:);
 
     toc
     disp('feature 4 computed')
     
 % feature 5: std echo height 
+    %X(:,5) = normalize_unity(zMedian.std);
     X(:,5) = zMedian.std(:);
+    X(isnan(zMedian.std),5) = 0;
 
     toc
     disp('feature 5 computed')
     
 % feature 6: max echo height 
     zMax = raw2ras([las.x,las.y,las.z],res,1,'dsm'); zMax.z = inpaint_nans(zMax.z,4); 
+    %X(:,6) = normalize_unity(zMax.z);
     X(:,6) = zMax.z(:);
 
     toc
     disp('feature 6 computed')
+
+% % feature 7: average height difference 
+%     ras1mAvgz = raw2ras([xDif;yDif;zDif]',res,1,'int'); ras1mAvgzInterp = inpaint_nans(ras1mAvgz.int,4);
+%     
+%     % normalize and add to X array 
+%     X(:,7) = normalize_unity(ras1mAvgzInterp); 
 % 
+%     toc
+%     disp('feature 7 computed')
+    
+    
+    
+    
 % % plots 
 % figure; myimage(ras1mDtm.x,ras1mDtm.y,ras1mDtmInterp);
 % figure; myimage(ras1mDtm.x,ras1mDtm.y,singleEchosInt.int);
@@ -95,6 +116,7 @@ tic
 % figure; myimage(ras1mDtm.x,ras1mDtm.y,zMedian.z);
 % figure; myimage(ras1mDtm.x,ras1mDtm.y,zMedian.std);
 % figure; myimage(ras1mDtm.x,ras1mDtm.y,zMax.z);
+% figure; myimage(ras1mDtm.x,ras1mDtm.y,ras1mAvgz.int);
 
     
 

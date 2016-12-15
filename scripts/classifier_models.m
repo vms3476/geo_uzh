@@ -1,4 +1,4 @@
-% LDA 
+% LDA testing 
 
 load fisheriris
 gscatter(meas(:,1), meas(:,2), species,'rgb','osd');
@@ -111,16 +111,14 @@ rgb = cat(3,uint8(cir.data(:,:,1)),uint8(cir.data(:,:,2)),uint8(cir.data(:,:,3))
 figure; imshow(rgb); title('RGB Non-Veg AOI')
 
 X_n = computeFeatures(las,wsl); % coniferous input to random forest function
-idx_n = (wsl.data(:)==0); % keep only the pixels classified as broadleaf
+idx_n = (wsl.data(:)==0); % keep only the pixels classified as non-veg
 X_N = X_n(idx_n,:);
-
-
 
 
 % combine same number of samples per class into matrix X, training data. 
 % Each row is a sample/observation/pixel. Each column is a feature.
 classSamples = min([size(X_B,1) size(X_C,1) size(X_N,1)]);
-classSamples = 5000;
+classSamples = 6000;
 
 X = [ X_C(1:classSamples,:); X_B(1:classSamples,:); X_N(1:classSamples,:); ];
 
@@ -130,7 +128,7 @@ Y = [ repmat(2,classSamples,1) ; repmat(1,classSamples,1); repmat(0,classSamples
 
 
 
-%% train classifier
+% train classifier
 
 % start parallel pool
 pool = parpool(4);
@@ -141,16 +139,13 @@ Mdl = TreeBagger(400,X,Y,'Method','classification', ...
                          'MinLeafSize',5,'Options',paroptions, ...
                          'OOBPredictorImportance','on');
 
-%% assess feature importance 
+% assess feature importance 
 
 figure; 
 bar(Mdl.OOBPermutedPredictorDeltaError)
 
 
-
-%% test classifier 
-
-%% load test data 
+% test classifier - load test data 
 
 % AOI 
 xMin = 669000; xMax = 670000; yMin = 258880; yMax = 259250;
@@ -183,19 +178,20 @@ overlay_polygons(laegernTreeTable_final);
 rgbTest = cat(3,uint8(cirTest.data(:,:,1)),uint8(cirTest.data(:,:,2)),uint8(cirTest.data(:,:,3)));
 figure; imshow(rgbTest); 
 
-%% calculate features for test data 
+
+% calculate features for test data 
 
 Xnew = computeFeatures(lasTest, wslTest);
 
-%% use classifier to validate 
 
+% use classifier to predict classes of input pixels
 %ypred = predict(Mdl,Xnew);
 [ypred,unaries] = Mdl.predict(Xnew);
 ypred = str2num(cell2mat(ypred));
 
 
 
-%% plot both the WSL truth map and preduction
+% plot both the WSL truth map and preduction
 figure; 
 myscatter3(wslTest.X(:),wslTest.Y(:),wslTest.data(:),wslTest.data(:),gray); view(2); 
 overlay_polygons(laegernTreeTable_final);
@@ -239,4 +235,12 @@ myimage(wslTest.x,wslTest.y,reshape(labels,size(wslTest.data))); colormap gray;
 
 
 
-
+%% Plot class-wise unaries
+figure;
+subplot(311);
+myimage(wslTest.x,wslTest.y,reshape(unaries(:,1),size(wslTest.data)));
+subplot(312);
+myimage(wslTest.x,wslTest.y,reshape(unaries(:,2),size(wslTest.data)));
+subplot(313);
+myimage(wslTest.x,wslTest.y,reshape(unaries(:,3),size(wslTest.data)));
+colormap gray;
