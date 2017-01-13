@@ -19,7 +19,7 @@ function [ X ] = computeFeatures( las, res )
 
 tic
 
-% feature 1: height difference vector
+% feature 1: median height difference
     x = las.x';
     y = las.y';
     z = las.z';
@@ -45,8 +45,8 @@ tic
     % calculate raster, median zDif values ('dtm')
     ras1mDtm = raw2ras([xDif;yDif;zDif]',res,1,'dtm'); ras1mDtmInterp = inpaint_nans(ras1mDtm.z,4);
     
-    % normalize and add to X array 
-    %X(:,1) = normalize_unity(ras1mDtmInterp); 
+    % add to X array 
+    %X(:,1) = normalize_unity(ras1mDtmInterp); % normalize
     X(:,1) = ras1mDtmInterp(:);
 
     toc
@@ -97,6 +97,18 @@ tic
     toc
     disp('feature 6 computed')
 
+% feature  7: vertical histogram    
+   rasV = raw2vox([las.x,las.y,las.z],res,1,'dsm');  
+   X(:,7:56) = reshape(rasV.vHist,numel(res.x)*numel(res.y),size(rasV.vHist,3));
+   
+   toc
+   disp('feature 7 computed')
+    
+% feature 8: surrounding pixels 
+   
+    
+    
+    
 % % feature 7: average height difference 
 %     ras1mAvgz = raw2ras([xDif;yDif;zDif]',res,1,'int'); ras1mAvgzInterp = inpaint_nans(ras1mAvgz.int,4);
 %     
