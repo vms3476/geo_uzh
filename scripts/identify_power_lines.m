@@ -22,7 +22,7 @@ function [ raw_all ] = identify_power_lines( lazName, tile_res, res, peri, densi
 % sample function call:
 %       identify_power_lines('n643000_265000.laz',200,1,6,0.1)
 
-
+tic;
 
 % uncompress LAZ to LAS 
 lasName = [lazName(1:end-1) 's'];
@@ -226,7 +226,7 @@ for x = 1:numel(xList)-1
         raw_all.record = rmfield(raw_all.record,'index');
         
         % save LAS subset with power line classification in tmp dir
-        LASwrite(raw_all,[tmpDir '/' tmpDir '_' num2str(counter) '.las'],'version', 12)
+        LASwrite(raw_all,[tmpDir '/' tmpDir '_' num2str(counter) '.las'],'version', 12, 'verbose', false);
 
         % variable to number each output file
         counter = counter + 1;
@@ -235,20 +235,25 @@ for x = 1:numel(xList)-1
     
 end
 
+% combine all tile subsets into single las file
+unix(['/Users/scholl/LAStools/bin/lasmerge -i ' tmpDir '/*.las -o ' tmpDir '_pl.las'])
+
+% read LAS tile to assess large linear features 
+las = LASread([tmpDir '_pl.las'],false,false);
+las = refine_power_lines(las,2,10,10,60);
+
+LASwrite(las,[tmpDir '_pl2.las'],'version', 12, 'verbose', false);
 
 
-
-
-
-
-
-% % use laszip -merged to combine all subsets into a single laz file 
-unix(['/Users/scholl/LAStools/bin/laszip -merged -i ' tmpDir '/*.las -o ' tmpDir '_pl.laz'])
+% convert las to laz file 
+unix(['/Users/scholl/LAStools/bin/laszip -i ' tmpDir '_pl.las -o' tmpDir '_pl.laz']);
 
 % % delete files that are no longer necessary 
-unix(['rm -r ' tmpDir])
-unix(['rm ' lasName])
-unix(['rm data.las'])
+unix(['rm -r ' tmpDir]);
+unix(['rm ' lasName]);
+unix('rm data.las');
+unix(['rm ' tmpDir '_pl.las']);
 
+toc
 
 end 
