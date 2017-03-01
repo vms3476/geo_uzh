@@ -1,42 +1,60 @@
-function [ raw_all ] = identify_power_lines( lazName, tile_res, res, peri, densityThr)
+function [ raw_all ] = identify_power_lines( lazName )
 
+% this method must be in the same directory which contains the csv file,
+% identify_power_lines_config.csv. This file contains the following 
+% input parameters for identifying power line points, changing their 
+% classification values, and performing hough trans
 
-% MUST BE IN DIRECTORY CONTAINING INPUT LAZ FILE
-% SPECIFY THE PATH TO LASZIP
-
-% lazName = string, filename of current 1 km x 1 km tile to process, 
-% with .laz extension must be in current directory. 
-
-% tile_res = integer, resolution of tile subset (100, 200, 250m) 
-
-% res = integer, resolution of raster for power line identification.
-% the current other parameters have been tested when raster_res = 1
-
-% peri =  integer, perimeter of neighborhood around cell of intrest to 
-% assess during power line identification method 
-
-% densityThr = double, threshold over which it is too dense to classify
-% the cluster within the current cell as power lines 
 
 
 % sample function call:
-%       identify_power_lines('n643000_265000.laz',200,1,6,0.1)
+%       identify_power_lines('n643000_265000.laz')
 
-tic;
 
-% uncompress LAZ to LAS 
-lasName = [lazName(1:end-1) 's'];
-if ~exist(lasName,'file')
-    laszip = '/Users/scholl/LAStools/bin/laszip';
-    unix([laszip ' -i ' lazName ' -o ' lasName]);
+
+% get the parts of the LAZ or LAS path 
+[pathstr,filename,ext] = fileparts(lazName); 
+
+% read the configuration text file for input parameters:
+%   tile_res = integer, resolution of tile subset (100, 200, 250m)
+%   res = integer, resolution of raster for power line identification.
+%       the current other parameters have been tested when raster_res = 1
+%   peri =  integer, perimeter of neighborhood around cell of intrest to 
+%       assess during power line identification method 
+%   densityThr = double, threshold over which it is too dense to classify
+%       the cluster within the current cell as power lines 
+fileID = fopen('identify_power_lines_config.csv','r'); 
+configInfo = textscan(fileID, '%s','delimiter',',','HeaderLines',1); 
+fclose(fileID);
+
+lastoolsBinPath = configInfo{1}{1};
+tile_res = str2double(configInfo{1}{2});
+res = str2double(configInfo{1}{3}); 
+peri = str2double(configInfo{1}{4});
+densityThr = str2double(configInfo{1}{5}); 
+
+
+% if input is LAZ, convert to LAS 
+laszip = [lastoolsBinPath 'laszip'];
+if ext(end) == 'z'
+    lasName = [filename '.las'];
+    if ~exist(lasName,'file')
+        unix([laszip ' -i ' lazName ' -o ' lasName]);
+    end
+% if input is already in LAS form, make note of it to not delete the
+% original LAS file later
+else
+    lasName = lazName;
+    inputIsLAS = 1;
 end
 
-% create temporary directory to save LAS subsets 
-tmpDir = lasName(1:end-4);
+
+% create temporary directory to save LAS subsets
+tmpDir = [pathstr filesep filename];
 unix(['mkdir ' tmpDir]);
 
 % determine starting x and y coordinates using lasinfo
-[~,cmdout] = unix(['/Users/scholl/LAStools/bin/lasinfo -i ' lasName]); % lasinfo
+[~,cmdout] = unix([lastoolsBinPath 'lasinfo -i ' lasName]); % lasinfo
 minIdx = strfind(cmdout,'min x y z:'); 
 xStart = str2double(cmdout(minIdx+28:minIdx+33));
 yStart = str2double(cmdout(minIdx+38:minIdx+44));
@@ -61,6 +79,7 @@ end
 
 counter = 1;
 
+
 % loop through tile subset 
 for x = 1:numel(xList)-1
     for y = 1:numel(yList)-1
@@ -71,13 +90,13 @@ for x = 1:numel(xList)-1
         area = [xList(x) xList(x+1) yList(y) yList(y+1)];
         
         % if output from getrawlas already in mainDir, delete it 
-        if exist('data.las','file') == 2
-            unix('rm data.las');
+        if exist([pathstr filesep 'data.las'],'file') == 2
+            unix(['rm ' pathstr filesep 'data.las']);
         end
         
         % read the subset of LAS data, use mParkan method LASread
-        getrawlas(cd,area);
-        raw_all = LASread('data.las',false,false);
+        getrawlas(pathstr,area);
+        raw_all = LASread([pathstr filesep 'data.las'],false,false);
         
         
        
@@ -216,9 +235,9 @@ for x = 1:numel(xList)-1
                 raw_all.record.classification(ismember(raw_all.record.index,pl_index))=14;
                 % remove the power line points and reiterate
                 raw = subsetraw(raw,raw.classification~=14);
-                reiterate = 1
+                reiterate = 1;
             else % no more power lines to find, exit while loop 
-                reiterate = 0        
+                reiterate = 0;        
             end
         end
         
@@ -226,7 +245,7 @@ for x = 1:numel(xList)-1
         raw_all.record = rmfield(raw_all.record,'index');
         
         % save LAS subset with power line classification in tmp dir
-        LASwrite(raw_all,[tmpDir '/' tmpDir '_' num2str(counter) '.las'],'version', 12, 'verbose', false);
+        LASwrite(raw_all,[tmpDir filesep filename '_' num2str(counter) '.las'],'version', 12, 'verbose', false);
 
         % variable to number each output file
         counter = counter + 1;
@@ -236,24 +255,26 @@ for x = 1:numel(xList)-1
 end
 
 % combine all tile subsets into single las file
-unix(['/Users/scholl/LAStools/bin/lasmerge -i ' tmpDir '/*.las -o ' tmpDir '_pl.las'])
+unix([lastoolsBinPath 'lasmerge -i ' tmpDir filesep '*.las -o ' tmpDir '_pl.las'])
 
-% read LAS tile to assess large linear features 
+% read LAS tile to assess large linear features. write output to LAS
 las = LASread([tmpDir '_pl.las'],false,false);
 las = refine_power_lines(las,2,10,10,60);
+LASwrite(las,[tmpDir '_pl.las'],'version', 12, 'verbose', false);
 
-LASwrite(las,[tmpDir '_pl2.las'],'version', 12, 'verbose', false);
-
-
-% convert las to laz file 
-unix(['/Users/scholl/LAStools/bin/laszip -i ' tmpDir '_pl.las -o' tmpDir '_pl.laz']);
+% compress las to laz file 
+unix([lastoolsBinPath 'laszip -i ' tmpDir '_pl.las -o ' pathstr filesep filename '_pl.laz']);
 
 % % delete files that are no longer necessary 
-unix(['rm -r ' tmpDir]);
-unix(['rm ' lasName]);
+unix(['rm -r ' tmpDir]); 
+
+% If the input was LAS, do not delete it 
+if ~inputIsLAS
+    unix(['rm ' lasName]);
+end
 unix('rm data.las');
 unix(['rm ' tmpDir '_pl.las']);
 
-toc
+
 
 end 
