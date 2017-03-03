@@ -1,7 +1,11 @@
 function [raw,hdr] = readlas(fname);
 %  function [raw,hdr] = readlas(fname);
 %  load .las data
-    
+
+% extrinisic function declarations for MATLAB coder use. Victoria Scholl
+coder.extrinsic('readlas_hdr','fopen')
+
+
 hdr = readlas_hdr(fname);
 
 [fid] = fopen(fname,'r','l');

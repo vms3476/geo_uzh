@@ -8,17 +8,17 @@ function [raw] = getrawlas(dire,are,lastoolsBinPath)
   cd(dire)
 
   if nargin == 1
-%      disp(['! /Users/scholl/LAStools/bin/lasmerge -i *.las -o data.las']);
-      eval(['! ' lastoolsBinPath 'lasmerge -i *.las -o data.las']);
+      disp(['! /Users/scholl/LAStools/bin/lasmerge -i *.las -o data.las']);
+      eval(['! /Users/scholl/LAStools/bin/lasmerge -i *.las -o data.las']);
 %       disp(['! lasmerge -i *.laz -o data.las']);
 %       eval(['! lasmerge -i *.laz -o data.las']);
     raw = readlas('data.las');
     return
   elseif nargin == 2 | nargin == 3
-%     disp(['! /Users/scholl/LAStools/bin/lasmerge -i *.las -o  data.las -inside ',num2str(floor(are(1))),' ', ...
-%           num2str(floor(are(3))),' ',num2str(ceil(are(2))),' ', ...
-%           num2str(ceil(are(4)))]);
-    eval(['! ' lastoolsBinPath 'lasmerge -i *.las -o data.las -inside ',num2str(floor(are(1))),' ', ...
+    disp(['! /Users/scholl/LAStools/bin/lasmerge -i *.las -o  data.las -inside ',num2str(floor(are(1))),' ', ...
+          num2str(floor(are(3))),' ',num2str(ceil(are(2))),' ', ...
+          num2str(ceil(are(4)))]);
+    eval(['! /Users/scholl/LAStools/bin/lasmerge -i *.las -o data.las -inside ',num2str(floor(are(1))),' ', ...
           num2str(floor(are(3))),' ',num2str(ceil(are(2))),' ', ...
           num2str(ceil(are(4)))]);
     raw = readlas('data.las');

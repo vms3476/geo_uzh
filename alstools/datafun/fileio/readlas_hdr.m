@@ -1,7 +1,10 @@
 function [hdr] = readlas_hdr(fname);
 % function [hdr] = readlas_hdr(fname);
 % Function for reading and parsing binary header od .las LIDAR data files
-  
+
+% extrinisic function declarations for MATLAB coder use. (Victoria Scholl)
+coder.extrinsic('fopen','setstr')
+
 hdr = mkhdr;  
 fid = fopen(fname,'r','l');
 

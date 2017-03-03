@@ -76,12 +76,12 @@ for k = 1:length(lines)
     yLeft = slope * (xLeft - x1) + y1;
     xRight = columns; % x is on the right edge.
     yRight = slope * (xRight - x1) + y1;
-    plot([xLeft, xRight], [yLeft, yRight], 'LineWidth',2,'Color','green');
+%     plot([xLeft, xRight], [yLeft, yRight], 'LineWidth',2,'Color','green');
     
     
     % Plot original points on the lines
-    plot(xy(1,1),xy(1,2),'x','LineWidth',2,'Color','yellow');
-    plot(xy(2,1),xy(2,2),'x','LineWidth',2,'Color','red');
+%     plot(xy(1,1),xy(1,2),'x','LineWidth',2,'Color','yellow');
+%     plot(xy(2,1),xy(2,2),'x','LineWidth',2,'Color','red');
     
     % determine which pixels are intersected by the lines
     % across a matrix with the same dimensions as the image tile
@@ -101,26 +101,27 @@ for k = 1:length(lines)
     
 end
 
-figure; imagesc(m); colormap gray
+% %plot the mask encompassing the linear regions 
+%figure; imagesc(m); colormap gray
 
 se = strel('disk',5);
 dilateM = imdilate(m,se);
 
 se = strel('disk',10);
 morphM = imclose(dilateM,se);
-imshow(morphM)
+% imshow(morphM)
 
-% apply the mask to the input image to keep only power line areas
+% % apply the mask to the input image to keep only power line areas
 keepAreas = morphM > 0;
-filteredbw = bw;
-filteredbw(~keepAreas) = 0;
-figure; imshow(filteredbw)
-title('Power line output after filtering')
+% filteredbw = bw;
+% filteredbw(~keepAreas) = 0;
+% figure; imshow(filteredbw)
+% title('Power line output after filtering')
 
 filteredbw = bw;
 filteredbw(keepAreas) = 0;
-figure; imshow(filteredbw)
-title('Points within these cells must change classification')
+% figure; imshow(filteredbw)
+% title('Points within these cells must change classification')
 
 removeAreas = filteredbw==1;
 

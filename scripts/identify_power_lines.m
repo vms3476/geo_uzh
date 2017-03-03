@@ -1,4 +1,4 @@
-function [ raw_all ] = identify_power_lines( lazName )
+function [ raw_all ] = identify_power_lines( inputFilename, outputDir, configFilename )
 
 % this method must be in the same directory which contains the csv file,
 % identify_power_lines_config.csv. This file contains the following 
@@ -6,14 +6,24 @@ function [ raw_all ] = identify_power_lines( lazName )
 % classification values, and performing hough trans
 
 
-
 % sample function call:
-%       identify_power_lines('n643000_265000.laz')
+%       identify_power_lines('/Users/scholl/geo_uzh/data/KantonAargau/powerlines/aoi7/658000_250000_subset.las',...
+%                            '/Users/scholl/geo_uzh/data/KantonAargau/powerlines/aoi7/pl/'...
+%                            '/Users/scholl/geo_uzh/data/KantonAargau/powerlines/identify_power_lines_config.csv')
 
 
 
 % get the parts of the LAZ or LAS path 
-[pathstr,filename,ext] = fileparts(lazName); 
+[pathstr,filename,ext] = fileparts(inputFilename); 
+
+% add filesep character onto the end out outputDir 
+if outputDir(end) ~= filesep
+    outputDir = [outputDir filesep];
+end
+
+% create outpu directory 
+unix(['mkdir ' outputDir]);
+
 
 % read the configuration text file for input parameters:
 %   tile_res = integer, resolution of tile subset (100, 200, 250m)
@@ -23,7 +33,7 @@ function [ raw_all ] = identify_power_lines( lazName )
 %       assess during power line identification method 
 %   densityThr = double, threshold over which it is too dense to classify
 %       the cluster within the current cell as power lines 
-fileID = fopen('identify_power_lines_config.csv','r'); 
+fileID = fopen(configFilename,'r'); 
 configInfo = textscan(fileID, '%s','delimiter',',','HeaderLines',1); 
 fclose(fileID);
 
@@ -37,14 +47,15 @@ densityThr = str2double(configInfo{1}{5});
 % if input is LAZ, convert to LAS 
 laszip = [lastoolsBinPath 'laszip'];
 if ext(end) == 'z'
-    lasName = [filename '.las'];
+    lasName = [pathstr filesep filename '.las'];
+    inputIsLAS = 0;
     if ~exist(lasName,'file')
-        unix([laszip ' -i ' lazName ' -o ' lasName]);
+        unix([laszip ' -i ' inputFilename ' -o ' lasName]);
     end
 % if input is already in LAS form, make note of it to not delete the
 % original LAS file later
 else
-    lasName = lazName;
+    lasName = inputFilename;
     inputIsLAS = 1;
 end
 
@@ -95,7 +106,7 @@ for x = 1:numel(xList)-1
         end
         
         % read the subset of LAS data, use mParkan method LASread
-        getrawlas(pathstr,area);
+        getrawlas(pathstr,area,lastoolsBinPath);
         raw_all = LASread([pathstr filesep 'data.las'],false,false);
         
         
@@ -263,7 +274,7 @@ las = refine_power_lines(las,2,10,10,60);
 LASwrite(las,[tmpDir '_pl.las'],'version', 12, 'verbose', false);
 
 % compress las to laz file 
-unix([lastoolsBinPath 'laszip -i ' tmpDir '_pl.las -o ' pathstr filesep filename '_pl.laz']);
+unix([lastoolsBinPath 'laszip -i ' tmpDir '_pl.las -o ' outputDir filename '_pl.laz']);
 
 % % delete files that are no longer necessary 
 unix(['rm -r ' tmpDir]); 
@@ -272,7 +283,7 @@ unix(['rm -r ' tmpDir]);
 if ~inputIsLAS
     unix(['rm ' lasName]);
 end
-unix('rm data.las');
+unix(['rm ' pathstr filesep 'data.las']);
 unix(['rm ' tmpDir '_pl.las']);
 
 
