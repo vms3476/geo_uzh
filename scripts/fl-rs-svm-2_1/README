@@ -1,0 +1,57 @@
+====================================
+Feature learning for Remote sensing
+====================================
+
+### Description
+
+This package is a Matlab implementation of a sparse optimization scheme for automated feature selection in remote sensing. 
+It is the code that has been used in the numerical experiments of the papers: 
+
+* Tuia, D., Volpi, M., Dalla Mura, M., Rakotomamonjy, A., Flamary, R., "Automatic Feature Learning for Spatio-Spectral Image Classification With Sparse SVM", Geoscience and Remote Sensing, IEEE Transactions on, Vol. 52, N. 10, pp 6062-6074, 2014.
+
+* Tuia, D., Flamary, R., Courty, N., "Multiclass feature learning for hyperspectral image classification: sparse and hierarchical solutions", ISPRS Journal of Photogrammetry and Remote Sensing (under revision), 2014.
+
+The toolbox has been mainly coded by [Devis Tuia](https://sites.google.com/site/devistuia/), [Michele Volpi](https://sites.google.com/site/michelevolpiresearch/home) and [Rémi Flamary](http://remi.flamary.com/).
+
+#### Solver
+
+We provide a general solver for squared hinge loss SVM of the form:
+
+\min_\varphi\quad\min_{\w,b} \quad\sum_{i=1}^{n} \max(0,1-y_i(\varphi(\mathbf{x}_i)^T\w+b))^2 + \lambda\Omega(\w)
+
+where $\Omega(\w)=\sum_i |w_i|$  promote sparsity and $\varphi(\cdot)$ is a nonlinear feature extraction.
+
+Since version 2.0 of the toolbox we provide a solver for multiclass multinomial logistic regression to optimize problems such as:
+
+\min_\varphi\quad\min_{\W,\b} \quad\sum_{i=1}^{n} L(y_i,\varphi(\mathbf{x}_i),\W,\b) + \lambda\Omega_{1,2}(\W)
+
+where $\Omega_{1,2}(\W)=\sum_i \|\W_{i,\cdot}\|_2$  promote joint sparsity accros classes and $\varphi(\cdot)$ is a nonlinear feature extraction.
+
+This toolbox is in Matlab and the algorithm used for solving the inner problem is a 
+Forward-Backward Splitting algorithm from the [FISTA](http://epubs.siam.org/doi/abs/10.1137/080716542?journalCode=sjisbi) paper implemented in [G-SVM].
+
+Note that since version 2, we use the efficient group-lasso solver provided by the toolbox [SPAMS](http://spams-devel.gforge.inria.fr/).
+
+
+### Download
+
+Current version : 2.1
+
+Download : fl-rs-svm-2.1.zip
+
+Dataset : [AVIRIS_IndianPines.mat](http://remi.flamary.com/download/AVIRIS_IndianPines.mat)
+
+
+### Installation
+
+Quick version:
+
+- Add all the paths and subpaths to matlab.
+- Depending on your system, it might be necessary to compile the toolbox [SPAMS](http://spams-devel.gforge.inria.fr/) using script /utils/spams-matlab/compile.m .
+
+Entry points:
+
+- DEMO_ActiveSet.m : Illustrate and compare the 3 active set approaches from the papers.
+- generateFeatures.m : this is the file to be customized to generate the features of interest. in the example provided, it generates contextual features.
+- contextualfeatures.m : to use the attribute filters, we use the attribute profile code as in Dalla Mura's [paper](http://dx.doi.org/10.1109/TGRS.2010.2048116). Be careful because  the features ATT-i and ATT-s features can be VERY slow.
+- get_feature_test_manybands.m :  It must be capable of generating the features selected by the active set (whose specs are in "feat"). In the examples, it uses contextualfeatures.m, which generates spatial filters.

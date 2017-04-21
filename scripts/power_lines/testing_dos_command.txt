@@ -1,0 +1,1 @@
+.\power_lines.exe "C:\Program Files\MATLAB\R2016a\toolbox\compiler\deploy\win64\MCRInstaller.exe" \\service.geo.uzh.ch\private\vscholl\data\Documents\MATLAB\power_lines\658000_250000_subset.las \\service.geo.uzh.ch\private\vscholl\data\Documents\MATLAB\power_lines\pl\ \\service.geo.uzh.ch\private\vscholl\data\Documents\MATLAB\power_lines\identify_power_lines_config.csv

@@ -21,8 +21,8 @@ if outputDir(end) ~= filesep
     outputDir = [outputDir filesep];
 end
 
-% create outpu directory 
-unix(['mkdir ' outputDir]);
+% create output directory 
+mkdir(outputDir);
 
 
 % read the configuration text file for input parameters:
@@ -50,7 +50,7 @@ if ext(end) == 'z'
     lasName = [pathstr filesep filename '.las'];
     inputIsLAS = 0;
     if ~exist(lasName,'file')
-        unix([laszip ' -i ' inputFilename ' -o ' lasName]);
+        eval(['! ' laszip ' -i ' inputFilename ' -o ' lasName]);
     end
 % if input is already in LAS form, make note of it to not delete the
 % original LAS file later
@@ -59,57 +59,43 @@ else
     inputIsLAS = 1;
 end
 
-
 % create temporary directory to save LAS subsets
 tmpDir = [pathstr filesep filename];
-unix(['mkdir ' tmpDir]);
-
-% determine starting x and y coordinates using lasinfo
-[~,cmdout] = unix([lastoolsBinPath 'lasinfo -i ' lasName]); % lasinfo
-minIdx = strfind(cmdout,'min x y z:'); 
-xStart = str2double(cmdout(minIdx+28:minIdx+33));
-yStart = str2double(cmdout(minIdx+38:minIdx+44));
-maxIdx = strfind(cmdout,'max x y z:'); 
-xEnd = ceil(str2double(cmdout(maxIdx+28:maxIdx+36)));
-yEnd = ceil(str2double(cmdout(maxIdx+38:maxIdx+47)));
-
+mkdir(tmpDir);
 
 % list of starting and end coordinates for the tile subsets
 % based on the tile_res parameter and the extent of the entire LAS file
-xList = xStart:tile_res:xEnd;
-if xList(end)< xEnd
-    xList = [xList xEnd];
+pc = LASread(lasName,false,false);
+xList = pc.header.min_x:tile_res:pc.header.max_x;
+if xList(end)< pc.header.max_x
+    xList = [xList pc.header.max_x];
 end
 
-yList = yStart:tile_res:yEnd;
-if yList(end)< yEnd
-    yList = [yList yEnd];
+yList = pc.header.min_y:tile_res:pc.header.max_y;
+if yList(end)< pc.header.max_y
+    yList = [yList pc.header.max_y];
 end
-
-
 
 counter = 1;
 
+
+% for testing with Z?rich data, reset the classification field of 
+% points classified as power line (15,16) to vegetation (3)
+pc.record.classification(pc.record.classification == 15) = 3; 
+pc.record.classification(pc.record.classification == 12) = 3; 
+pc.record.z(pc.record.z>60) = 0; % remove noise 
 
 % loop through tile subset 
 for x = 1:numel(xList)-1
     for y = 1:numel(yList)-1
         
-        % read current tile subset LAS PC data
-        xList(x);
-        yList(y); 
-        area = [xList(x) xList(x+1) yList(y) yList(y+1)];
-        
-        % if output from getrawlas already in mainDir, delete it 
-        if exist([pathstr filesep 'data.las'],'file') == 2
-            unix(['rm ' pathstr filesep 'data.las']);
-        end
-        
-        % read the subset of LAS data, use mParkan method LASread
-        getrawlas(pathstr,area,lastoolsBinPath);
-        raw_all = LASread([pathstr filesep 'data.las'],false,false);
-        
-        
+        % current subset of LAS PC data
+        disp(['current tile: ' num2str(xList(x)) ' ' num2str(yList(y))])
+        ii = pc.record.x >= xList(x) & pc.record.x <= xList(x+1) & ...
+             pc.record.y >= yList(y) & pc.record.y <= yList(y+1);
+        clear raw_all
+        raw_all.record = subsetraw(pc.record,ii);
+
        
         %%%%%%%%%%%%%%%% identify power lines %%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % create indices for all PC entries in the input LAS 
@@ -256,7 +242,7 @@ for x = 1:numel(xList)-1
         raw_all.record = rmfield(raw_all.record,'index');
         
         % save LAS subset with power line classification in tmp dir
-        LASwrite(raw_all,[tmpDir filesep filename '_' num2str(counter) '.las'],'version', 12, 'verbose', false);
+        LASwrite(rawe_all,[tmpDir filesep filename '_' num2str(counter) '.las'],'version', 12, 'verbose', false);
 
         % variable to number each output file
         counter = counter + 1;
@@ -266,7 +252,7 @@ for x = 1:numel(xList)-1
 end
 
 % combine all tile subsets into single las file
-unix([lastoolsBinPath 'lasmerge -i ' tmpDir filesep '*.las -o ' tmpDir '_pl.las'])
+system([lastoolsBinPath 'lasmerge -i ' tmpDir filesep '*.las -o ' tmpDir '_pl.las'])
 
 % read LAS tile to assess large linear features. write output to LAS
 las = LASread([tmpDir '_pl.las'],false,false);
@@ -274,17 +260,18 @@ las = refine_power_lines(las,2,10,10,60);
 LASwrite(las,[tmpDir '_pl.las'],'version', 12, 'verbose', false);
 
 % compress las to laz file 
-unix([lastoolsBinPath 'laszip -i ' tmpDir '_pl.las -o ' outputDir filename '_pl.laz']);
+eval(['!' lastoolsBinPath 'laszip -i ' tmpDir '_pl.las -o ' outputDir filename '_pl.laz']);
 
-% % delete files that are no longer necessary 
-unix(['rm -r ' tmpDir]); 
+% delete files that are no longer necessary 
+rmdir(tmpDir,'s'); 
 
 % If the input was LAS, do not delete it 
 if ~inputIsLAS
-    unix(['rm ' lasName]);
+    delete(lasName);
 end
-unix(['rm ' pathstr filesep 'data.las']);
-unix(['rm ' tmpDir '_pl.las']);
+
+delete([tmpDir '_pl.las']);
+
 
 
 

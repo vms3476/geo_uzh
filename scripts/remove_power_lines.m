@@ -32,18 +32,24 @@ function [ raw_pl, las ] = remove_power_lines( raw, res, stdThr, peri, nClusters
 % by Victoria Scholl, 18 Jan 2017
 
 
+% % Loop until there are no PL classified points in current iteration
+
 
 % create raster from raw PC data
 ras = raw2ras([raw.x,raw.y,raw.z],res,res,'dsm');
 
-% apply standard deviation threshold to identify candidate pixels
-
 % % select std thresh based on histogram peak
-% [f,xi] = ksdensity(ras.std(ras.std>1));
-% [peaks, heights] = findpeaks(f,xi);
-% stdThr = heights(find(ismember(peaks,max(peaks))))
+[f,xi] = ksdensity(ras.std(ras.std>1));
+[peaks, heights] = findpeaks(f,xi);
+stdThr = heights(find(ismember(peaks,max(peaks))));
 
-k = ras.std > stdThr; 
+% in regions where a single power line is over the water,
+% the std is very low (no ground data) but the height from
+% the dsm raster is high, so increase the t
+ras.std((ras.std<1)&(ras.z>10))=stdThr; 
+
+% apply standard deviation threshold to identify candidate pixels
+k = ras.std >= stdThr; 
 ras.std(k) = 1; 
 ras.std(~k) = 0; 
 
@@ -147,18 +153,31 @@ for i = 1:numel(ras.x)
             plIdx = inIdx(G==cluster1);
             %las.Classification(plIdx) = 14;
             las.Classification(in2Idx) = 14;
-        end
       
-
+            
+        %end 
+        
+        % TESTING this decision for AOI 4 
+        elseif clusterDif12 < 3 && clusterDif23 > 10 && (numel(kIn(G==cluster1))+numel(kIn(G==cluster2))<= numel(kIn(G==cluster3))) && density < densityThr
+        las.Classification(in2Idx) = 14;
+        
+        
+        % For the case when powerlines are above water
+        % if the minimum height for all 3 clusters greater than 10m 
+        elseif min(kIn(:,3)) > 9 
+            las.Classification(in2Idx) = 14;
+        
+        end
         
         
     end
     
 end
 
-raw_pl = las;
+raw_pl = las; % return PC with PL points classified as 14
+las = subsetraw(las,las.Classification~=14); % remove PL points from PC
 
-las = subsetraw(las,las.Classification~=14)
+    
 
 end
 

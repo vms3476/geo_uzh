@@ -28,6 +28,8 @@ xMin = 669600; xMax = 670000; yMin = 258600; yMax = 259250;
 area = [xMin xMax yMin yMax]; % laegern crown polygon area, and more southern
 las = getrawlas(lasDir,area);
 
+% unix(['/Users/scholl/LAStools/bin/lasinfo -i data.las -cd']) % lasinfo
+
 % plot input PC 
 figure;myscatter3(las.x,las.y,las.z,las.z,parula); colorbar; view(2); swisstick;
 title('Normalized PC','FontSize',14)
@@ -48,13 +50,24 @@ figure;myscatter3(wsl.X(:),wsl.Y(:),wsl.data(:),wsl.data(:),gray); view(2);
 title('WSL Forest Type','FontSize',14); swisstick
 
 
-% % tree type masks 
-% maskB = zeros(numel(wsl.y),numel(wsl.x)); % broadleaf
-% maskB(wsl.data == 1) = 1; 
-% 
-% maskC = zeros(numel(wsl.y),numel(wsl.x)); % coniferous
-% maskC(wsl.data == 2) = 1; 
+% tree type masks 
+maskB = zeros(numel(wsl.y),numel(wsl.x)); % broadleaf
+maskB(wsl.data == 1) = 1; 
 
+maskC = zeros(numel(wsl.y),numel(wsl.x)); % coniferous
+maskC(wsl.data == 2) = 1; 
+
+% % classify points within region of flight line overlap
+% % terminal: wine lasoverage.exe -i /Users/scholl/geo_uzh/data/KantonAargau/batch3/data.las -step 2 -o tile_overage.las
+% lasOver = readlas('/Users/scholl/geo_uzh/data/KantonAargau/tile_overage.las');
+% j = ismember(lasOver.Classification,12);
+% lasThin = subsetraw(lasOver,~j); 
+% x = lasThin.x';
+% y = lasThin.y';
+% z = lasThin.z';
+% rnnr = lasThin.rnnr';
+% classification = double(lasThin.Classification');
+% int = lasThin.int';
 
 %% variables of interest for entire tile 
 x = las.x';
@@ -62,6 +75,7 @@ y = las.y';
 z = las.z';
 rnnr = las.rnnr';
 classification = double(las.Classification');
+int = las.int';
 
 
 % raster for ground classification
@@ -80,6 +94,7 @@ y(i) = [];
 z(i) = [];
 rnnr(i) = [];
 classification(i) = [];
+int(i) = []; 
 
 drnnr = diff(rnnr);
 dz = diff(z);
@@ -87,12 +102,54 @@ ii = (drnnr == 1 | drnnr == 2 | drnnr == 3 | drnnr == 4 | drnnr == 5 | drnnr == 
 xDif = x(ii);
 yDif = y(ii); 
 zDif = -dz(ii); 
-
+intDif = int(ii); 
 
 % 1m raster of first-last echos 
-tic
 ras1mDen = raw2ras([xDif;yDif;zDif]',ras1mGrnd,1,'den'); 
-toc
+figure;myimage(ras1mDen.x,ras1mDen.y,ras1mDen.z); title('DEN');
+
+% ras1mInt = raw2ras([xDif;yDif;intDif]',ras1mGrnd,1,'int'); 
+% figure;myimage(ras1mInt.x,ras1mInt.y,ras1mInt.int); title('INT');
+% 
+% ras1mDtm = raw2ras([xDif;yDif;zDif]',ras1mGrnd,1,'dtm'); 
+% figure;myimage(ras1mDtm.x,ras1mDtm.y,ras1mDtm.z); title('DTM');
+% 
+% ras1mDsm = raw2ras([xDif;yDif;zDif]',ras1mGrnd,1,'dsm'); 
+% figure;myimage(ras1mDsm.x,ras1mDsm.y,ras1mDsm.z); title('DSM');
+
+%% boxplots to evalute the impact of higher point density in overlap 
+% determine average first-last pulse distance difference per polygon
+k = ismember(laegernTreeTable_final.species,[11 14 22 23 29 31 56 59]); 
+trees = laegernTreeTable_final(k,:);
+n_trees = numel(trees.species); 
+stats.idField = trees.idField;
+stats.species = trees.species;
+for tree = 1:n_trees     
+    
+    % find raw las points within current polygon
+    xpoly = trees.xPoly{tree};
+    ypoly = trees.yPoly{tree};
+    in = inpolygon(xDif,yDif,xpoly,ypoly);
+    zpoly = zDif(in);
+    intPoly = intDif(in); % intensity of first returns in polygon
+    
+    stats.zDif(tree,1) = mean(zpoly); 
+    stats.meanInt(tree,1) = mean(intPoly);
+end
+
+% % keep only species 11 14 22 23 29 31 56 59, each has 40 or more polygons
+% k = ismember(stats.species,[11 14 22 23 29 31 56 59]); 
+% stats_plot = subsetraw(stats,k);
+
+% average first-last echo height difference boxplot
+figure; boxplot(stats.zDif,stats.species);title('2010 Laegeren first-last echo height difference per pulse','FontSize',14); 
+xlabel('Species','FontSize',14); ylabel('average height difference within crown polygon','FontSize',14);
+set(gca,'fontsize',14); set(gcf,'position',[500 500 1000 1000])
+
+% mean intensity boxplot
+figure; boxplot(stats.meanInt,stats.species);title('2010 Laegeren first echo average intensity per pulse','FontSize',14); 
+xlabel('Species','FontSize',14); ylabel('average first echo intensity within crown polygon','FontSize',14);
+set(gca,'fontsize',14); set(gcf,'position',[500 500 1000 1000])
 
 %% classification with 2 thresholds 
 % height difference threshold classificaiton 
@@ -117,7 +174,7 @@ ras1mDenTh2 = raw2ras([xTh2',yTh2',zTh2'],ras1mGrnd,1,'den');
 % divide to find the proportion of pixels 
 ras1mproportion = ras1mDenTh2.z ./ ras1mDen.z;
 
-% inpaint the proportion rasters
+% inpaint the proportion rasters   
 ras1mproportion = inpaint_nans(ras1mproportion, 4); 
 
 ras1mClass = ones(size(ras1mDen.z));   % 1 is deciduous
@@ -137,7 +194,8 @@ disp('     Morphological processing...')
         pixg = 36;
         conng = 4;
     % structural element for smoothing
-        se = strel('disk',3);
+        %se = strel('disk',3);
+        se = strel('disk',2);
 
 % remove noisy pixels in coniferous regions
 ras1mClassMorph = bwareaopen(ras1mClass,pix1c,conn1c);

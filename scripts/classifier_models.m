@@ -28,13 +28,13 @@ xMin = 666450; xMax = 666524; yMin = 230868; yMax = 230975;
 % load and plot input PC 
 area = [xMin xMax yMin yMax]; wkt_polygon(area)
 cd(lasDir)
-% if exist('data.las') == 2
-%    unix('rm data.las') 
-% end
-% las = getrawlas(lasDir,area);
-% figure; myscatter3(las.x,las.y,las.z,las.z,parula); colorbar; view(2); 
-% title('Normalized Coniferous AOI PC','FontSize',14)
-% save('coniferous_las_aoi3','las')
+if exist('data.las') == 2
+   unix('rm data.las') 
+end
+las = getrawlas(lasDir,area);
+figure; myscatter3(las.x,las.y,las.z,las.z,parula); colorbar; view(2); 
+title('Normalized Coniferous AOI PC','FontSize',14)
+save('coniferous_las_aoi3','las')
 load('coniferous_las_aoi3')
 
 % WSL ground truth 
@@ -118,6 +118,7 @@ title('WSL Coniferous AOI Forest Type','FontSize',14);
 [cir.X, cir.Y] = meshgrid(cir.x,cir.y);
 rgb = cat(3,uint8(cir.data(:,:,1)),uint8(cir.data(:,:,2)),uint8(cir.data(:,:,3)));
 figure; imshow(rgb); title('RGB Coniferous AOI')
+
 
 X_c = computeFeatures(las,wsl,1,inpaintNans); % coniferous input to random forest function
 idx_c = (wsl.data(:)==2); % keep only the pixels classified as coniferous

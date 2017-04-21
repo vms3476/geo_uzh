@@ -1,0 +1,68 @@
+% individual tree detection ITD for coniferous regions 
+
+% load normalized PC AOI 3 south eastern canton Aargau
+lasDir = '/Users/scholl/geo_uzh/data/KantonAargau/randomForest/';
+xMin = 666450; xMax = 666524; yMin = 230868; yMax = 230975; %  AOI 3
+xMin = 669252; xMax = 669317; yMin = 257549; yMax = 257647; % AOI 2
+xMin = 632900; xMax = 633415; yMin = 234320; yMax = 234506; % AOI 1
+
+% Vordemwald area in Aargau, field data exists
+lasDir = '/Users/scholl/geo_uzh/data/KantonAargau/vorwalden/';
+xMin = 633766; xMax = 634053; yMin = 235882; yMax = 236080; 
+
+area = [xMin xMax yMin yMax]; %wkt_polygon(area)
+cd(lasDir)
+if exist('data.las') == 2
+   unix('rm data.las') 
+end
+raw = getrawlas(lasDir,area);
+figure; myscatter3(raw.x,raw.y,raw.z,raw.z,parula)
+title('normalized LAS point cloud')
+
+% create CHM raster 
+chm = raw2ras([raw.x,raw.y,raw.z],0.5,0.5,'dsm');
+[chm.X,chm.Y] = meshgrid(chm.x,chm.y);
+
+% find local maxima 
+filtsize = 5;
+sig = 0.65;
+minheight = 3;
+[tree] = locmax(chm.z,filtsize,sig,minheight);
+
+% get starting positions
+sx = chm.X(tree);
+sy = chm.Y(tree);
+figure; myimage(chm.x,chm.y,chm.z);
+hold on; swisstick;axis xy;axis equal;axis tight
+plot(sx,sy,'.k','markersize',7);
+title('CHM raster with local maxima points')
+
+% define loc variable with locations of maxima
+clear loc
+loc(:,1) = chm.X(tree);
+loc(:,2) = chm.Y(tree);
+loc(:,3) = chm.z(tree);
+
+% clusters raw laser data into single trees 
+minHeight = 3; % minimum tree size to be resolved
+aspect = 5; % aspect ratio of crowns : dz/mean([dx;dy])
+segMethod = 'kme'; % segmentation method 
+[x,y,z,idx] = segtree(raw,loc,minHeight,aspect,'kme');
+
+% calculate tree parameters values from clustered data
+trees = crdata(x,y,z);
+
+% plot tree clusters with random colors
+figure; hold on; title('tree segments')
+swisstick;axis xy;axis equal;axis tight
+colors = [158,1,66; 213,62,79; 244,109,67; 253,174,97; 254,224,139; ...
+          230,245,152; 171,221,164; 102,194,165; 50,136,189; 94,79,162] / 255;
+nColors = size(colors,1);
+for i = 1:size(trees.x,2)
+    plot3(x{i},y{i},z{i},'.','color',colors(randi(nColors),:),'markersize',4);
+end
+
+
+
+
+

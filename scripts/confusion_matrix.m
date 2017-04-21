@@ -47,6 +47,10 @@ xlim([669600 670000]); ylim([258900 259300]);
 overlay_polygons(laegernTreeTable_final); xlabel('Easting','FontSize',14); ylabel('Northing','FontSize',14);
 title('WSL Forest Type','FontSize',14); view(2);
 
+
+
+%%
+
 % confusion matrix for classification images compared to crown polygon data
 % for Laegern study site 
 
@@ -104,4 +108,86 @@ b = double(matrix.speciesEstimate'); b(b==2) = 0; % estimated tree type class
 
 c = double(matrix.wslSpeciesEstimate'); c(c==2) = 0; % esimated wsl map type
 figure; plotconfusion(a,b,'My Method',a,c,'WSL Map')
+
+
+
+%% 
+
+% specify the name of the classification map to compare to the WSL map,
+% must have the same dimensions as the WSL map
+classIm = ypred_medFilter;
+% classIm = pred_ras;
+
+fig = figure; 
+subplot(1,2,1);
+myimage(wslTest.x,wslTest.y,classIm); colormap gray;
+overlay_polygons(laegernTreeTable_final); xlabel('Easting','FontSize',14); ylabel('Northing','FontSize',14);
+
+title(['ALS Forest Type, ' num2str(medianFilterSize), 'x',num2str(medianFilterSize) ' Median filter applied'],'FontSize',14); view(2);
+
+subplot(1,2,2);
+myimage(wslTest.x,wslTest.y,wslTest.data); colormap gray;
+overlay_polygons(laegernTreeTable_final); xlabel('Easting','FontSize',14); ylabel('Northing','FontSize',14);
+title('WSL Forest Type','FontSize',14); view(2);
+
+[wslTest.X,wslTest.Y] = meshgrid(wslTest.x,wslTest.y);
+
+k = ismember(laegernTreeTable_final.species,[11 14 22 23 29 31 56 59]); 
+trees = laegernTreeTable_final(k,:);
+
+matrix.idField = trees.idField;
+matrix.species = trees.species;
+
+n_trees = numel(matrix.species); 
+
+for tree = 1:n_trees     
+    % find raw las points within current polygon
+    xpoly = trees.xPoly{tree};
+    ypoly = trees.yPoly{tree};
+    
+    % record the species, based on most frequent class type within polygon
+    % 1 = deciduous, 2 = coniferous, 0 = ground)      
+    classPoly = mode(classIm(inpolygon(wslTest.X,wslTest.Y,xpoly',ypoly')));
+    
+    matrix.speciesEstimate(tree,1) = classPoly;
+    
+    % determine species estimate from WSL map
+    wslPoly = mode(wslTest.data(inpolygon(wslTest.X,wslTest.Y,xpoly',ypoly')));
+    matrix.wslSpeciesEstimate(tree,1) = wslPoly; 
+    
+    % plot to visualize accuracy 
+    % on my map
+    z = repmat(50,size(xpoly));
+    subplot(1,2,1)
+    if classPoly == 1 % deciduous estimate
+         d = patch(xpoly,ypoly,z,[0.2 0.2 1],'FaceAlpha',0.7,'EdgeAlpha',0);
+    elseif classPoly == 2 % coniferous estimate
+         d = patch(xpoly,ypoly,z,[0 0.8 0.4],'FaceAlpha',0.7,'EdgeAlpha',0);
+    end
+    % on wsl map
+    subplot(1,2,2)
+    if wslPoly == 1 % deciduous estimate
+         d = patch(xpoly,ypoly,z,[0.2 0.2 1],'FaceAlpha',0.7,'EdgeAlpha',0);
+    elseif wslPoly == 2 % coniferous estimate
+         d = patch(xpoly,ypoly,z,[0 0.8 0.4],'FaceAlpha',0.7,'EdgeAlpha',0);
+    end
+    
+end
+
+
+set(gcf,'position',[500 500 2000 1000])
+% save plot - save As .... png
+%print(fig,['Forest_Type_Comparison_' files(i).name(1:end-4)],'-dpng');
+
+% confusion matrix 
+matrix.speciesTruth = trees.species;
+matrix.speciesTruth(matrix.speciesTruth < 20) = 0; % coniferous
+matrix.speciesTruth(matrix.speciesTruth > 20) = 1; % deciduous
+
+a = matrix.speciesTruth'; a(a==2) = 0; % ground truth tree type class
+b = double(matrix.speciesEstimate'); b(b==2) = 0; % estimated tree type class
+
+c = double(matrix.wslSpeciesEstimate'); c(c==2) = 0; % esimated wsl map type
+figure; plotconfusion(a,b,'ALS Classification',a,c,'WSL Map')
+
 
