@@ -1,6 +1,0 @@
-% script for making 3d vis of lidar data from Kt. Aargau
-cd /Users/morsdorf/Desktop/Thierstein3d
-
-raw_on = readlas('640000_260000_on.las');
-
-raw_off = readlas('640000_260000_off.las');
